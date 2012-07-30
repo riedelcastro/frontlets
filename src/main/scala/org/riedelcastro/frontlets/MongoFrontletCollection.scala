@@ -441,14 +441,17 @@ class MongoFrontlet[C <: Frontlet](val frontlet: C) {
 }
 
 class MongoIntSlot[C <: Frontlet](val slot: C#IntSlot) {
-  def $gt(that:Int):C = {
-    slot.frontlet._map(slot.name) = Map("$gt" -> that)
+
+  def comparator(comp:String, that:Int):C = {
+    slot.frontlet._map(slot.name) = Map(comp -> that)
     slot.frontlet
   }
-  def $lt(that:Int):C = {
-    slot.frontlet._map(slot.name) = Map("$lt" -> that)
-    slot.frontlet
-  }
+
+  def $gt(that:Int):C = comparator("$gt",that)
+  def $lt(that:Int):C = comparator("$lt",that)
+  def $gte(that:Int):C = comparator("$gte",that)
+  def $lte(that:Int):C = comparator("$lte",that)
+
 
 }
 
