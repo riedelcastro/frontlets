@@ -22,7 +22,8 @@ scalacOptions ++= Seq("-unchecked","-deprecation")
 // Add multiple dependencies
 libraryDependencies ++= Seq( 
      "org.mongodb" % "mongo-java-driver" % "2.7.3", 
-     "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT"
+     "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT",
+     "org.scalatest" %% "scalatest" % "1.8" % "test"
 )
 
 publishTo <<= (version) { version: String =>

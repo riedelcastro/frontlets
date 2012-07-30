@@ -15,7 +15,6 @@
 package org.riedelcastro.frontlets
 
 import collection.mutable
-import util.parsing.json.JSON
 
 /**
  * A Frontlet provides typed access to an underlying Map data-structure. This map can come
@@ -513,7 +512,7 @@ class Frontlet {
 
   /**
    * A helper trait for libraries that need ref slots to be covariant.
-   * @tparam A
+   * @tparam A the type of frontlet the slot refers to.
    */
   trait AbstractRefSlot[+A <: Frontlet] extends AbstractSlot[Any] {
 
@@ -560,16 +559,4 @@ class Frontlet {
   }
 
 }
-
-object JSonTest {
-  def main(args: Array[String]) {
-    val json = JSON.parseFull("")
-
-  }
-}
-
-// Also make a version of this that caches objects as they come out of MongoDB
-@deprecated("Will be removed.")
-class FrontletRefs extends scala.collection.mutable.HashMap[Any, Frontlet]
-
 
