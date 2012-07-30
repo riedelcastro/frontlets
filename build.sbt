@@ -1,11 +1,13 @@
 name := "frontlets"
 
-organization := "org.riedelcastro"
+organization := "org.riedelcastro.frontlets"
 
 // The := method used in Name and Version is one of two fundamental methods.
 // The other method is <<=
 // All other initialization methods are implemented in terms of these.
 //version := "0.1-SNAPSHOT"
+
+crossScalaVersions := Seq("2.9.1", "2.9.2")
 
 scalaVersion := "2.9.2"
 
