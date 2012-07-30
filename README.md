@@ -9,21 +9,22 @@ Usage
 A `Frontlet` is a simple scala class with `Slot` objects that correspond to underlying map keys:
 
 ```scala
-    class Person extends Frontlet {
-      val age = IntSlot("age")
-      val name = StringSlot("name")
-      val spouse = RefSlot("spouse", () => new Person)
-    }
+class Person extends Frontlet {
+  val age = IntSlot("age")
+  val name = StringSlot("name")
+  val spouse = RefSlot("spouse", () => new Person)
+}
 ```
 
 Slots can be accessed and modified via Scala syntactic sugar:
 
-    val person = new Person
-    person.name := "Riedel Alejandro Castro Ruz"
-    person.age  := 36
-    println(person.name())
-    println(person.age())
-
+```scala
+val person = new Person
+person.name := "Riedel Alejandro Castro Ruz"
+person.age  := 36
+println(person.name())
+println(person.age())
+```
 Frontlets particularly shine in combination with document-based nosql databases such as mongodb. You can
 wrap frontlets around BSON objects retrieved from mongo databases. The frontlet library alos provides
 mongo collection wrappers that provide a powerful *typed* query interface close to the original raw
@@ -32,10 +33,12 @@ utilize the flexibility and power of mongo (without being at the mercy of magic 
 
 A simple querying example:
 
-    val coll = mongoDB.getCollection("persons")
-    val persons = new MongoFrontletCollection(coll, () => new Person)
-    val old = persons.query(_.age.$gt(36),_.name.select)
-    val age = old.next().age()
+```scala
+val coll = mongoDB.getCollection("persons")
+val persons = new MongoFrontletCollection(coll, () => new Person)
+val old = persons.query(_.age.$gt(36),_.name.select)
+val age = old.next().age()
+```
 
 The last query here returns all persons (frontlets) over 36, but only retrieves their name field.
 
