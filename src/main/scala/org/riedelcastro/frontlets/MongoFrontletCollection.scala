@@ -440,7 +440,19 @@ class MongoFrontlet[C <: Frontlet](val frontlet: C) {
   }
 }
 
-/**
+class MongoIntSlot[C <: Frontlet](val slot: C#IntSlot) {
+  def $gt(that:Int):C = {
+    slot.frontlet._map(slot.name) = Map("$gt" -> that)
+    slot.frontlet
+  }
+  def $lt(that:Int):C = {
+    slot.frontlet._map(slot.name) = Map("$lt" -> that)
+    slot.frontlet
+  }
+
+}
+
+  /**
  * A slot that can do mongo specific operations
  * @param slot the original slot in the frontlet
  * @tparam C the frontlet type.
@@ -584,6 +596,8 @@ class BSONMap(val bson: BSONObject) extends collection.mutable.Map[String, Any] 
 object MongoFrontletImplicits {
 
   implicit def toMongoSlot[C <: Frontlet, V](slot: C#Slot[V]) = new MongoSlot(slot)
+
+  implicit def toMongoIntSlot[C <: Frontlet, V](slot: C#IntSlot) = new MongoIntSlot(slot)
 
   implicit def toMongoRefSlot[C <: Frontlet, A <: Frontlet](slot: C#AbstractRefSlot[A]) = new MongoRefSlot(slot)
 

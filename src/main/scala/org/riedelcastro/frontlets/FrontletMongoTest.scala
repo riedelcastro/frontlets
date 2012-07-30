@@ -85,6 +85,9 @@ object FrontletMongoTest {
       println(p._map)
     }
 
+    println("*** GT query:")
+    println(persons.query(_.age.$gt(19),_.name.select).mkString("\n"))
+
     //test a delta update, laura turns 21 and is also interested in Rick!
     val updatedLaura = new Person
     updatedLaura.id = 2

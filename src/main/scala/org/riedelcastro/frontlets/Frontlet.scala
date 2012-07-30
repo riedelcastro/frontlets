@@ -91,7 +91,7 @@ class Frontlet {
    */
   def _newDefaultMap: MapType = new scala.collection.mutable.HashMap[String, Any]
 
-  @deprecated
+  @deprecated("use _map instead", "0.1")
   def _rawGet(name: String): Any = {
     _map(name)
   }
@@ -408,20 +408,11 @@ class Frontlet {
     import collection.JavaConversions._
 
     /**
-     * Returns the Seq stored in the underlying map. Does some internal conversion if
-     * the underlying list is not a Seq but something convertible.
-     * @todo: remove the case statement here and rely on underlying map implementation
-     *        to return the correct Seq representation.
+     * Returns the Seq stored in the underlying map.
      * @return the value of slot. May throw an exception if the underlying map has
      *         no field corresponding to this slot.
      */
-    def value: Seq[A] = _map(name) match {
-      case s: Seq[A] => s
-      case al: java.util.ArrayList[A] => al.toSeq
-      case m: java.util.Map[String, A] => Range(0, m.size).map(i => m.get(i.toString))
-      case m: mutable.Map[String, A] => m.map(_._2).toSeq
-      case null => null
-    }
+    def value: Seq[A] = _map(name).asInstanceOf[Seq[A]]
 
     def :=(value: Seq[A]) {
       _map.update(name, value)
@@ -454,13 +445,12 @@ class Frontlet {
      */
     def value: Seq[A] = _map(name) match {
       case null => null
-      case s: Seq[AnyRef] => if (s.length == 0) Nil
+      case s: Seq[_] => if (s.length == 0) Nil
       else s.map(m => {
         val c = constructor()
         c._map = m.asInstanceOf[MapType]
         c
-      }) // The AnyRef is expected to be a Scala or Java Map
-      //      case al:java.util.ArrayList[A] => if (al.size == 0) Nil else al.toSeq.map(m => { val c = constructor(); c._map = m; c }) // The AnyRef is expected to be a Scala or Java Map
+      })
     }
 
     /**
