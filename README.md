@@ -8,11 +8,13 @@ Usage
 
 A `Frontlet` is a simple scala class with `Slot` objects that correspond to underlying map keys:
 
+```scala
     class Person extends Frontlet {
       val age = IntSlot("age")
       val name = StringSlot("name")
       val spouse = RefSlot("spouse", () => new Person)
     }
+```
 
 Slots can be accessed and modified via Scala syntactic sugar:
 
