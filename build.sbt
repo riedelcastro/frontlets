@@ -34,6 +34,8 @@ publishTo <<= (version) { version: String =>
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
+releaseSettings
+
 //fork in run := true
 
 //javaOptions in run += "-Xmx8G"
