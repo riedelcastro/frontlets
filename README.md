@@ -7,6 +7,7 @@ Usage
 -----
 
 A `Frontlet` is a simple scala class with `Slot` objects that correspond to underlying map keys:
+
     class Person extends Frontlet {
       val age = IntSlot("age")
       val name = StringSlot("name")
@@ -14,6 +15,7 @@ A `Frontlet` is a simple scala class with `Slot` objects that correspond to unde
     }
 
 Slots can be accessed and modified via Scala syntactic sugar:
+
     val person = new Person
     person.name := "Riedel Alejandro Castro Ruz"
     person.age  := 36
@@ -27,6 +29,7 @@ collection interface. This gives you succinct and typesafe queries while you can
 utilize the flexibility and power of mongo (without being at the mercy of magic object persistence frameworks).
 
 A simple querying example:
+
     val coll = mongoDB.getCollection("persons")
     val persons = new MongoFrontletCollection(coll, () => new Person)
     val old = persons.query(_.age.$gt(36),_.name.select)
@@ -43,6 +46,7 @@ at least once.
 Installation
 ------------
 You can use frontlets as a sbt dependency
+
     resolvers ++= Seq("IESL snapshots" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots",
                      "IESL releases" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/releases")
 
