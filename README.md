@@ -25,6 +25,9 @@ person.age  := 36
 println(person.name())
 println(person.age())
 ```
+
+### Mongo Support ###
+
 Frontlets particularly shine in combination with document-based nosql databases such as mongodb. You can
 wrap frontlets around BSON objects retrieved from mongo databases. The frontlet library alos provides
 mongo collection wrappers that provide a powerful *typed* query interface close to the original raw
@@ -47,6 +50,43 @@ loops. In such cases you want to convert frontlets into a more efficient represe
 is often read and then only used once or twice (say, to render on a webpage). In such cases frontlets
 have very minimal overhead, as you would generally need to call the underlying, say, mongo map data structure
 at least once.
+
+### Persistent Object Graphs ###
+
+Frontlets can also make reading complex object graphs from the "linear" mongo collections more convenient (and possibly
+efficient), although this is highly *experimental*. For example, consider the following Frontlet:
+
+```scala
+class Node extends Frontlet {
+  val name = StringSlot("name")
+  val parent = RefSlot("parent", () => new Node)
+  val children = InverseSlot("children", (child:Node) => child.parent)
+}
+```
+
+It uses a `RefSlot` which can point to any other node, and the corresponding `InverseSlot`, which
+indicates that for each node there may be other nodes that have it as `parent`. The inverse children slot
+does not store anything (by design it should not even cache any collection of children). However,
+it can be used with a graph loading routine that generates cache objects which the reference and inverse slots
+in turn can use as implicit parameters):
+
+```scala
+//a mongo collection of nodes
+val graph = MongoFrontletCollection(coll, () => new Node)
+
+//find all nodes starting from the two given example nodes, and using the given neighborhood function
+val result = GraphLoader.load2(Seq(someNodeInTheGraph,anotherNode), {
+  case N: Node => Seq(p.children of graph, p.parent of graph)})
+
+//convert results to implicit cache objects that can be used in ref and inverse slots.
+implicit val inverter = GraphLoader.toInverter(result)
+implicit val index = GraphLoader.toRefs(result)
+
+//the following calls actually use the above cache objects, and return the neighbor of the given object
+//as stored in the graph and returned by the load2 method.
+println(someNodeInTheGraph.parent.deref)
+println(someNodeInTheGraph.children.value)
+```
 
 Installation
 ------------
