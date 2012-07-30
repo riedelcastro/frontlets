@@ -55,9 +55,9 @@ You can use frontlets as a sbt dependency
     resolvers ++= Seq("IESL snapshots" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots",
                      "IESL releases" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/releases")
 
-    libraryDependencies += "org.riedelcastro.frontlets" %% "frontlets" % "0.1-SNAPSHOT"
+    libraryDependencies += "org.riedelcastro.frontlets" %% "frontlets" % "[VERSION]"
 
 The library has been very useful already, but does not yet have a stable release. Feel free to use (at your own risk)
-the 0.1-SNAPSHOT in the meantime.
+the most current release or snapshot.
 
 
