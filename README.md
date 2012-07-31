@@ -6,7 +6,7 @@ Frontlets are lightweight typed wrappers around scala maps, tailored for interac
 Usage
 -----
 
-A `Frontlet` is a simple scala class with `Slot` objects that correspond to underlying map keys:
+A `Frontlet` is a simple scala class with `Slot` member objects that correspond to underlying map keys:
 
 ```scala
 class Person extends Frontlet {
@@ -25,6 +25,10 @@ person.age  := 36
 println(person.name())
 println(person.age())
 ```
+
+All slot values are stored in, and retrieved from, an underlying mutable scala map, in this case `person._map`.
+This map can come from anywhere: json results of a web-service, bson query results of a mongo database etc. In these
+cases frontlets give clients typed and concise access to the underlying raw map.
 
 ### Mongo Support ###
 
