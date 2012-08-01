@@ -72,7 +72,7 @@ It uses a `RefSlot` which can point to any other node, and the corresponding `In
 indicates that for each node there may be other nodes that have it as `parent`. The inverse children slot
 does not store anything (by design it should not even cache any collection of children). However,
 it can be used with a graph loading routine that generates cache objects which the reference and inverse slots
-in turn can use as implicit parameters):
+in turn can use as implicit parameters:
 
 ```scala
 //a mongo collection of nodes
@@ -104,4 +104,7 @@ You can use frontlets as a sbt dependency
 The library has been very useful already, but does not yet have a stable release. Feel free to use (at your own risk)
 the most current release or snapshot.
 
+License
+-------
+Frontlets are licensed under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
 
