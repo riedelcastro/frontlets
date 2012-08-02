@@ -51,6 +51,17 @@ class Frontlet {
   }
 
   /**
+   * Uses the json string to set the internal map.
+   * @param json the json string to parse and set the map content with.
+   * @return this frontlet.
+   */
+  def setJSON(json:String):this.type = {
+    _map = FrontletJacksonMapper.readValue[mutable.Map[String,Any]](json)
+    this
+  }
+
+
+  /**
    * Constructor that takes the underlying map.
    * @param map the underlying map to use.
    */
@@ -101,6 +112,12 @@ class Frontlet {
    * @return a string representation of the underyling map.
    */
   override def toString = _map.toString()
+
+  /**
+   * Returns a JSON representation of this frontlet's map.
+   * @return a JSON string representing this frontlet's content.
+   */
+  def toJSON = FrontletJacksonMapper.writeValueAsString(_map)
 
   /**
    * The map key to use for the ID field.
@@ -546,6 +563,19 @@ class Frontlet {
     def :=(value: A) {
       _map.update(name, value._map)
     }
+
+    /**
+     * Creates a frontlet of this slot's frontlet type, apply the given function to it, and set the slot
+     * to be the result of that application.
+     * @param f the function to apply to the created frontlet
+     * @return the slot's frontlet.
+     */
+    def create(f:A=>A = identity(_)):thisFrontlet.type = {
+      val frontlet = constructor()
+      this := f(frontlet)
+      thisFrontlet
+    }
+
   }
 
 }

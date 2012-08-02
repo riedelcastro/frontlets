@@ -9,8 +9,14 @@ import org.scalatest.matchers.MustMatchers
  */
 
 class FrontletSpec extends FunSpec with MustMatchers{
+  class Address extends Frontlet {
+    val street = StringSlot("street")
+    val number = IntSlot("number")
+  }
   class Person extends Frontlet {
     val age = IntSlot("age")
+    val address = FrontletSlot("address", () => new Address)
+    val hobbies = StringListSlot("hobbies")
   }
 
   describe("A Frontlet") {
@@ -24,7 +30,13 @@ class FrontletSpec extends FunSpec with MustMatchers{
       val person = new Person()
       person.age := 36
       person._map("age") must be (36)
-
+    }
+    it("should load and write json strings") {
+      val person1 = new Person().age(36).address.create(_.number(1).street("Broadway")).hobbies(Seq("ping-pong"))
+      val json1 = person1.toJSON
+      val person2 = new Person().setJSON(json1)
+      val json2 = person2.toJSON
+      json1 must be (json2)
     }
   }
 

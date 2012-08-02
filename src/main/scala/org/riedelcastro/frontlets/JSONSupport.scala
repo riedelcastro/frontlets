@@ -21,7 +21,7 @@ object JSONSupport {
   def main(args: Array[String]) {
     val json = """{"one":1,"two":{"key":5}}"""
     val parsedJacks = JacksMapper.readValue[collection.mutable.Map[String,Any]](json)
-    val parsedFrontlet = FrontletJacksonMapper.readValue[AnyRef](json)
+    val parsedFrontlet = FrontletJacksonMapper.readValue[collection.mutable.Map[String,Any]](json)
 //    val parsed = parse[collection.mutable.Map[String, Any]](json) //=> Map("one"->1,"two"->2)
     println(parsedJacks)
     println(parsedFrontlet)
