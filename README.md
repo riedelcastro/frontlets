@@ -55,6 +55,20 @@ is often read and then only used once or twice (say, to render on a webpage). In
 have very minimal overhead, as you would generally need to call the underlying, say, mongo map data structure
 at least once.
 
+### JSON import and export ###
+
+Frontlets can be imported and exported from JSON strings:
+
+```scala
+val person = new Person().setJSON("""{"age":36, "address":{"street":"Broadway","number":1}}""")
+person.age() must be (36)
+person.address().street() must be ("Broadway")
+person.toJSON must be ("""{"age":36, "address":{"street":"Broadway","number":1}}""")
+```
+
+Currently frontlets use [jackson](http://jackson.codehaus.org/) and its
+scala wrapper [jacks](https://github.com/wg/jacks) to implement this functionality.
+
 ### Persistent Object Graphs ###
 
 Frontlets can also make reading complex object graphs from the "linear" mongo collections more convenient (and possibly
