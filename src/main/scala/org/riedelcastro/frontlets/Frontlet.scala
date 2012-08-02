@@ -55,8 +55,41 @@ class Frontlet {
    * @param json the json string to parse and set the map content with.
    * @return this frontlet.
    */
-  def setJSON(json:String):this.type = {
-    _map = FrontletJacksonMapper.readValue[mutable.Map[String,Any]](json)
+  def setJSON(json: String): this.type = {
+    _map = FrontletJacksonMapper.readValue[mutable.Map[String, Any]](json)
+    this
+  }
+
+  /**
+   * Adds the content of another frontlet to this frontlet. The method is not typesafe,
+   * for the time being, because this gives greater flexibility.
+   * @param frontlet A frontlet. If this frontlet has overlapping keys with matching types,
+   *                 the addition will be meaningful. Note, however, that the frontlet type
+   *                 does not have to be the same.
+   */
+  def append(frontlet: Frontlet): this.type = {
+    _map ++= frontlet._map
+    this
+  }
+
+  /**
+   * Adds the content of a map to this frontlet. The method is not typesafe,
+   * for the time being, because this gives greater flexibility.
+   * @param map A map. If this map has overlapping keys with matching types,
+   *            the addition will be meaningful. Note, however, that the frontlet type
+   *            does not have to be the same.
+   */
+  def append(map: collection.Map[String, Any]): this.type = {
+    _map ++= map
+    this
+  }
+
+  /**
+   * Adds the content of a json string to this frontlet.
+   * @param json the json content to add.
+   */
+  def append(json: String): this.type = {
+    _map ++= FrontletJacksonMapper.readValue[mutable.Map[String, Any]](json)
     this
   }
 
@@ -143,7 +176,8 @@ class Frontlet {
    */
   final def id: Any = {
     // "final" because we need to ensure that the _id gets inserted into the
-    var result = _rawGet(idName) // avoid getOrElseUpdate because it will allocate a closure object
+    //todo: replace with getOrElseUpdate, but write some unit test first to make sure we don't break anything.
+    var result = _map.getOrElse(idName, null) // avoid getOrElseUpdate because it will allocate a closure object
     if (result != null) result
     else {
       result = newId
@@ -570,7 +604,7 @@ class Frontlet {
      * @param f the function to apply to the created frontlet
      * @return the slot's frontlet.
      */
-    def create(f:A=>A = identity(_)):thisFrontlet.type = {
+    def create(f: A => A = identity(_)): thisFrontlet.type = {
       val frontlet = constructor()
       this := f(frontlet)
       thisFrontlet
