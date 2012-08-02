@@ -12,7 +12,6 @@ crossScalaVersions := Seq("2.9.1", "2.9.2")
 scalaVersion := "2.9.2"
 
 resolvers ++= Seq(
-    "conjars.org" at "http://conjars.org/repo",
     "IESL third party" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/thirdparty/",
     "IESL snapshots" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots",
     "IESL releases" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/releases"
@@ -22,7 +21,8 @@ resolvers ++= Seq(
 scalacOptions ++= Seq("-unchecked","-deprecation")
 
 // Add multiple dependencies
-libraryDependencies ++= Seq( 
+libraryDependencies ++= Seq(
+     "com.lambdaworks" % "jacks" % "2.0.4",
      "org.mongodb" % "mongo-java-driver" % "2.7.3", 
      "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT",
      "org.scalatest" %% "scalatest" % "1.8" % "test"

@@ -104,6 +104,9 @@ You can use frontlets as a sbt dependency
 The library has been very useful already, but does not yet have a stable release. Feel free to use (at your own risk)
 the most current release or snapshot.
 
+Of course you can also download any version (click on "tags" to get a list of zip/tgz archives) or the current trunk,
+and the build using `sbt`.
+
 License
 -------
 Frontlets are licensed under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
