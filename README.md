@@ -72,7 +72,7 @@ scala wrapper [jacks](https://github.com/wg/jacks) to implement this functionali
 ### Persistent Object Graphs ###
 
 Frontlets can also make reading complex object graphs from the "linear" mongo collections more convenient (and possibly
-efficient), although this is highly *experimental*. For example, consider the following Frontlet:
+efficient), although this is highly **experimental**. For example, consider the following Frontlet:
 
 ```scala
 class Node extends Frontlet {
