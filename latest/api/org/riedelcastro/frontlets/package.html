@@ -1,0 +1,450 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>org.riedelcastro.frontlets</title>
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link type="text/css" media="screen" rel="stylesheet" href="../../../lib/template.css" />
+      <script type="text/javascript" src="../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+    
+        </head>
+        <body onload="sh_highlightDocument('../lib/', '.min.js');" class="value">
+      <div id="definition">
+        <img src="../../../lib/package_big.png" />
+        <p id="owner"><a name="org" class="extype" href="../../package.html">org</a>.<a name="org.riedelcastro" class="extype" href="../package.html">riedelcastro</a></p>
+        <h1>frontlets</h1>
+      </div>
+
+      <h4 class="signature" id="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">frontlets</span>
+      </span>
+      </h4>
+      
+      <div class="fullcommenttop" id="comment"></div>
+    
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input accesskey="/" type="text" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div class="types members" id="types">
+              <h3>Type Members</h3>
+              <ol><li visbl="pub" name="org.riedelcastro.frontlets.AbstractFrontletCollection" data-isabs="true">
+      <a id="AbstractFrontletCollection:AbstractFrontletCollection[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="AbstractFrontletCollection.html"><span class="name">AbstractFrontletCollection</span></a><span class="tparams">[<span name="C">+C &lt;: Frontlet</span>]</span><span class="result"> extends Iterable[C]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Covariant interface to a frontlet collection.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.BSONMap" data-isabs="false">
+      <a id="BSONMap:BSONMap"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="BSONMap.html"><span class="name">BSONMap</span></a><span class="result"> extends Map[String, Any]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Wrapper around a bson map to provide scala-access to the map and its content.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.BasicBSONBSeq" data-isabs="false">
+      <a id="BasicBSONBSeq:BasicBSONBSeq"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="BasicBSONBSeq.html"><span class="name">BasicBSONBSeq</span></a><span class="result"> extends Seq[Any]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Lazy scala seq wrapper around bson sequence.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.CachedFunction" data-isabs="false">
+      <a id="CachedFunction:CachedFunction[F, T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="CachedFunction.html"><span class="name">CachedFunction</span></a><span class="tparams">[<span name="F">F</span>, <span name="T">T</span>]</span><span class="result"> extends Map[F, T]</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.EagerFrontletConverter" data-isabs="true">
+      <a id="EagerFrontletConverter:EagerFrontletConverter[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="EagerFrontletConverter.html"><span class="name">EagerFrontletConverter</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends MongoFrontletConverter[C]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A converter that eagerly, and recursively, creates a mutable.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet" data-isabs="false">
+      <a id="Frontlet:Frontlet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet.html"><span class="name">Frontlet</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Frontlet provides typed access to an underlying Map data-structure.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.FrontletJacksonDeserializers" data-isabs="false">
+      <a id="FrontletJacksonDeserializers:FrontletJacksonDeserializers"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="FrontletJacksonDeserializers.html"><span class="name">FrontletJacksonDeserializers</span></a><span class="result"> extends Base</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.FrontletJacksonMapper" data-isabs="true">
+      <a id="FrontletJacksonMapper:FrontletJacksonMapper"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="FrontletJacksonMapper.html"><span class="name">FrontletJacksonMapper</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.FrontletJacksonModule" data-isabs="false">
+      <a id="FrontletJacksonModule:FrontletJacksonModule"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="FrontletJacksonModule.html"><span class="name">FrontletJacksonModule</span></a><span class="result"> extends Module</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.FrontletUntypedObjectDeserializer" data-isabs="false">
+      <a id="FrontletUntypedObjectDeserializer:FrontletUntypedObjectDeserializer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="FrontletUntypedObjectDeserializer.html"><span class="name">FrontletUntypedObjectDeserializer</span></a><span class="result"> extends UntypedObjectDeserializer</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.IndexedLazyInverter" data-isabs="false">
+      <a id="IndexedLazyInverter:IndexedLazyInverter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="IndexedLazyInverter.html"><span class="name">IndexedLazyInverter</span></a><span class="result"> extends (InverseSlot[Frontlet]) ⇒ Iterable[Frontlet]</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Indexer" data-isabs="false">
+      <a id="Indexer:Indexer"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Indexer.html"><span class="name">Indexer</span></a><span class="result"> extends (AbstractSlot[Any], Any) ⇒ Unit</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.LazyFrontletConverter" data-isabs="true">
+      <a id="LazyFrontletConverter:LazyFrontletConverter[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="LazyFrontletConverter.html"><span class="name">LazyFrontletConverter</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends MongoFrontletConverter[C]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">This converter creates frontlets which do conversion from mongodb objects to
+scala maps and seqs on-the-fly.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.LazyInverter" data-isabs="false">
+      <a id="LazyInverter:LazyInverter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="LazyInverter.html"><span class="name">LazyInverter</span></a><span class="result"> extends (InverseSlot[Frontlet]) ⇒ Iterable[Frontlet]</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.LazyMongoInverter" data-isabs="false">
+      <a id="LazyMongoInverter:LazyMongoInverter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="LazyMongoInverter.html"><span class="name">LazyMongoInverter</span></a><span class="result"> extends (InverseSlot[Frontlet]) ⇒ Iterable[Frontlet]</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoFrontlet" data-isabs="false">
+      <a id="MongoFrontlet:MongoFrontlet[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoFrontlet.html"><span class="name">MongoFrontlet</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A wrapper around a frontlet that can be used to specify mongo queries using the frontlet map.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoFrontletCollection" data-isabs="false">
+      <a id="MongoFrontletCollection:MongoFrontletCollection[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoFrontletCollection.html"><span class="name">MongoFrontletCollection</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends MutableFrontletCollection[C] with MongoFrontletConverter[C]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A MongoFrontletCollection stores frontlets in a Mongo collection.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoFrontletConverter" data-isabs="true">
+      <a id="MongoFrontletConverter:MongoFrontletConverter[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoFrontletConverter.html"><span class="name">MongoFrontletConverter</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A trait to mix-in into mongo frontlet collections that controls how the raw
+mongo documents are converted to frontlets.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoIntSlot" data-isabs="false">
+      <a id="MongoIntSlot:MongoIntSlot[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoIntSlot.html"><span class="name">MongoIntSlot</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoInvSlot" data-isabs="false">
+      <a id="MongoInvSlot:MongoInvSlot[C, A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoInvSlot.html"><span class="name">MongoInvSlot</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>, <span name="A">A &lt;: Frontlet</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoPrimitiveListSlot" data-isabs="false">
+      <a id="MongoPrimitiveListSlot:MongoPrimitiveListSlot[C, A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoPrimitiveListSlot.html"><span class="name">MongoPrimitiveListSlot</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>, <span name="A">A</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Support for mongo queries specific to list attributes</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoRefSlot" data-isabs="false">
+      <a id="MongoRefSlot:MongoRefSlot[C, A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoRefSlot.html"><span class="name">MongoRefSlot</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>, <span name="A">A &lt;: Frontlet</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoSlot" data-isabs="false">
+      <a id="MongoSlot:MongoSlot[C, V]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoSlot.html"><span class="name">MongoSlot</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>, <span name="V">V</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A slot that can do mongo specific operations</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MutableFrontletCollection" data-isabs="true">
+      <a id="MutableFrontletCollection:MutableFrontletCollection[C]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="MutableFrontletCollection.html"><span class="name">MutableFrontletCollection</span></a><span class="tparams">[<span name="C">C &lt;: Frontlet</span>]</span><span class="result"> extends AbstractFrontletCollection[C]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A frontlet collection that can be modified (hence not covariant anymore).</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div class="values members" id="values">
+              <h3>Value Members</h3>
+              <ol><li visbl="pub" name="org.riedelcastro.frontlets.DerefImplicits" data-isabs="false">
+      <a id="DerefImplicits:DerefImplicits"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="DerefImplicits$.html"><span class="name">DerefImplicits</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.FrontletJacksonMapper" data-isabs="false">
+      <a id="FrontletJacksonMapper:FrontletJacksonMapper"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="FrontletJacksonMapper$.html"><span class="name">FrontletJacksonMapper</span></a><span class="result"> extends FrontletJacksonMapper</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.FrontletMongoTest" data-isabs="false">
+      <a id="FrontletMongoTest:FrontletMongoTest"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="FrontletMongoTest$.html"><span class="name">FrontletMongoTest</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">This class shows some example usage of frontlets and mongo serialization and querying.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.GraphLoader" data-isabs="false">
+      <a id="GraphLoader:GraphLoader"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="GraphLoader$.html"><span class="name">GraphLoader</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.JSONSupport" data-isabs="false">
+      <a id="JSONSupport:JSONSupport"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="JSONSupport$.html"><span class="name">JSONSupport</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt"></p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoFrontletConverter" data-isabs="false">
+      <a id="MongoFrontletConverter:MongoFrontletConverter"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoFrontletConverter$.html"><span class="name">MongoFrontletConverter</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Helper methods to convert frontlets into mongo objects and vice versa.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.MongoFrontletImplicits" data-isabs="false">
+      <a id="MongoFrontletImplicits:MongoFrontletImplicits"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="MongoFrontletImplicits$.html"><span class="name">MongoFrontletImplicits</span></a><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Implicits to import when you want to create frontlet mongo queries.</p>
+    </li></ol>
+            </div>
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>

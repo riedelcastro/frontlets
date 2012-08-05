@@ -1,0 +1,861 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>org.riedelcastro.frontlets.Frontlet</title>
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link type="text/css" media="screen" rel="stylesheet" href="../../../lib/template.css" />
+      <script type="text/javascript" src="../../../lib/jquery.js"></script>
+      <script type="text/javascript" src="../../../lib/jquery-ui.js"></script>
+      <script type="text/javascript" src="../../../lib/template.js"></script>
+      <script type="text/javascript" src="../../../lib/tools.tooltip.js"></script>
+    
+        </head>
+        <body onload="sh_highlightDocument('../lib/', '.min.js');" class="type">
+      <div id="definition">
+        <img src="../../../lib/class_big.png" />
+        <p id="owner"><a name="org" class="extype" href="../../package.html">org</a>.<a name="org.riedelcastro" class="extype" href="../package.html">riedelcastro</a>.<a name="org.riedelcastro.frontlets" class="extype" href="package.html">frontlets</a></p>
+        <h1>Frontlet</h1>
+      </div>
+
+      <h4 class="signature" id="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Frontlet</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      
+      <div class="fullcommenttop" id="comment"><div class="comment cmt"><p>A Frontlet provides typed access to an underlying Map data-structure. This map can come
+from various sources, such as JSON objects or MongoDB objects.</p><p>Frontlets are designed
+to make access to (often persistent) data safe, easy and generic. This comes at
+the price of efficiency, so clients should not access Frontlets in inner-loops
+of computations. In practice this may require a further conversion step from Frontlets
+into a more efficient representation.
+</p></div><dl class="attributes block"> <dt>Self Type</dt><dd><a name="org.riedelcastro.frontlets.Frontlet" class="extype" href="">Frontlet</a></dd></dl><div class="toggleContainer block">
+          <span class="toggle">Linear Supertypes</span>
+          <div class="superTypes hiddenContent">AnyRef, <span name="scala.Any" class="extype">Any</span></div>
+        </div></div>
+    
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input accesskey="/" type="text" /></span><span class="post"></span></div>
+        <div id="order">
+              <span class="filtertype">Ordering</span>
+              <ol><li class="alpha in"><span>Alphabetic</span></li><li class="inherit out"><span>By inheritance</span></li></ol>
+            </div>
+        <div id="ancestors">
+              <span class="filtertype">Inherited</span>
+              <ol><li class="hideall out"><span>Hide All</span></li>
+              <li class="showall in"><span>Show all</span></li></ol>
+              <ol id="linearization"><li name="org.riedelcastro.frontlets.Frontlet" class="in"><span>Frontlet</span></li><li name="scala.AnyRef" class="in"><span>AnyRef</span></li><li name="scala.Any" class="in"><span>Any</span></li></ol>
+            </div>
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div class="members" id="constructors">
+              <h3>Instance Constructors</h3>
+              <ol><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#this" data-isabs="false">
+      <a id="this:Frontlet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Frontlet</span><span class="params">(<span name="map">map: <span name="scala.collection.mutable.Map" class="extype">Map</span>[String, <span name="scala.Any" class="extype">Any</span>]</span>)</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Constructor that takes the underlying map.</p><div class="fullcomment"><div class="comment cmt"><p>Constructor that takes the underlying map.</p></div><dl class="paramcmts block"><dt class="param">map</dt><dd class="cmt"><p>the underlying map to use.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#this" data-isabs="false">
+      <a id="this:Frontlet"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Frontlet</span><span class="params">()</span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        <div class="types members" id="types">
+              <h3>Type Members</h3>
+              <ol><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.AbstractInverseSlot" data-isabs="true">
+      <a id="AbstractInverseSlot:AbstractInverseSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">sealed </span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$AbstractInverseSlot.html"><span class="name">AbstractInverseSlot</span></a><span class="tparams">[<span name="A">+A &lt;: Frontlet</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">An AbstractInverseSlot is a slot that contains a collection of
+other frontlets, namely the ones that have the given target value as
+value of the given foreign slot.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.AbstractRefSlot" data-isabs="true">
+      <a id="AbstractRefSlot:AbstractRefSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$AbstractRefSlot.html"><span class="name">AbstractRefSlot</span></a><span class="tparams">[<span name="A">+A &lt;: Frontlet</span>]</span><span class="result"> extends AbstractSlot[Any]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A helper trait for libraries that need ref slots to be covariant.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.AbstractSlot" data-isabs="true">
+      <a id="AbstractSlot:AbstractSlot[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$AbstractSlot.html"><span class="name">AbstractSlot</span></a><span class="tparams">[<span name="T">+T</span>]</span><span class="result"> extends AnyRef</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A Frontlet has a collection of slots (or fields) that store the attributes of the
+frontlet.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.BooleanListSlot" data-isabs="false">
+      <a id="BooleanListSlot:BooleanListSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$BooleanListSlot.html"><span class="name">BooleanListSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveListSlot[Boolean] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.BooleanSlot" data-isabs="false">
+      <a id="BooleanSlot:BooleanSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$BooleanSlot.html"><span class="name">BooleanSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveSlot[Boolean] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.DateSlot" data-isabs="false">
+      <a id="DateSlot:DateSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$DateSlot.html"><span class="name">DateSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveSlot[Date] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.DoubleListSlot" data-isabs="false">
+      <a id="DoubleListSlot:DoubleListSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$DoubleListSlot.html"><span class="name">DoubleListSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveListSlot[Double] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.DoubleSlot" data-isabs="false">
+      <a id="DoubleSlot:DoubleSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$DoubleSlot.html"><span class="name">DoubleSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveSlot[Double] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.FrontletListSlot" data-isabs="false">
+      <a id="FrontletListSlot:FrontletListSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$FrontletListSlot.html"><span class="name">FrontletListSlot</span></a><span class="tparams">[<span name="A">A &lt;: Frontlet</span>]</span><span class="params">(<span name="name">name: String</span>, <span name="constructor">constructor: () ⇒ A</span>)</span><span class="result"> extends Slot[Seq[A]] with Product with Serializable</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A slot that contains a list of frontlets.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.FrontletSlot" data-isabs="false">
+      <a id="FrontletSlot:FrontletSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$FrontletSlot.html"><span class="name">FrontletSlot</span></a><span class="tparams">[<span name="A">A &lt;: Frontlet</span>]</span><span class="params">(<span name="name">name: String</span>, <span name="constructor">constructor: () ⇒ A</span>)</span><span class="result"> extends Slot[A] with Product with Serializable</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A slot that contains a frontlet.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.IntListSlot" data-isabs="false">
+      <a id="IntListSlot:IntListSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$IntListSlot.html"><span class="name">IntListSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveListSlot[Int] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.IntSlot" data-isabs="false">
+      <a id="IntSlot:IntSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$IntSlot.html"><span class="name">IntSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveSlot[Int] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.InverseSlot" data-isabs="false">
+      <a id="InverseSlot:InverseSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$InverseSlot.html"><span class="name">InverseSlot</span></a><span class="tparams">[<span name="A">A &lt;: Frontlet</span>]</span><span class="params">(<span name="name">name: String</span>, <span name="slot">slot: (A) ⇒ AbstractRefSlot[Frontlet]</span>, <span name="m">m: Manifest[A]</span>)</span><span class="result"> extends AbstractInverseSlot[A] with Product with Serializable</span>
+      </span>
+      </h4>
+      <p class="comment cmt">The Inverse slot is a default implementation of the AbstractInverseSlot.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#MapType" data-isabs="false">
+      <a id="MapType:MapType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">MapType</span><span class="result"> = <span name="scala.collection.mutable.Map" class="extype">Map</span>[String, <span name="scala.Any" class="extype">Any</span>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The type of underlying Map.</p><div class="fullcomment"><div class="comment cmt"><p>The type of underlying Map. We use the generic scala mutable Map interface.
+If clients want to use their own Map data structure (such as MongoDB maps) they
+only need to provide a wrapper mutable.Map implementation around their data.
+</p></div></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.PrimitiveListSlot" data-isabs="true">
+      <a id="PrimitiveListSlot:PrimitiveListSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$PrimitiveListSlot.html"><span class="name">PrimitiveListSlot</span></a><span class="tparams">[<span name="A">A</span>]</span><span class="result"> extends Slot[Seq[A]]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A slot containing a list of primitives.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.PrimitiveSlot" data-isabs="true">
+      <a id="PrimitiveSlot:PrimitiveSlot[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$PrimitiveSlot.html"><span class="name">PrimitiveSlot</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends Slot[T]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A slot containing primitive values (ints, strings, booleans etc.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.RefSlot" data-isabs="false">
+      <a id="RefSlot:RefSlot[A]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$RefSlot.html"><span class="name">RefSlot</span></a><span class="tparams">[<span name="A">A &lt;: Frontlet</span>]</span><span class="params">(<span name="name">name: String</span>, <span name="constructor">constructor: () ⇒ A</span>)</span><span class="result"> extends Slot[Any] with AbstractRefSlot[A] with AbstractInverseSlot[A] with Product with Serializable</span>
+      </span>
+      </h4>
+      <p class="comment cmt">A RefSlot is a simple type of AbstractInverseSlot which &quot;contains&quot; all frontlets
+of a given type with the given ID.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.Slot" data-isabs="true">
+      <a id="Slot:Slot[T]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$Slot.html"><span class="name">Slot</span></a><span class="tparams">[<span name="T">T</span>]</span><span class="result"> extends AbstractSlot[T]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Default implementation of an AbstractSlot.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.StringListSlot" data-isabs="false">
+      <a id="StringListSlot:StringListSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$StringListSlot.html"><span class="name">StringListSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveListSlot[String] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.StringSlot" data-isabs="false">
+      <a id="StringSlot:StringSlot"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$StringSlot.html"><span class="name">StringSlot</span></a><span class="params">(<span name="name">name: String</span>)</span><span class="result"> extends PrimitiveSlot[String] with Product with Serializable</span>
+      </span>
+      </h4>
+      
+    </li></ol>
+            </div>
+
+        
+
+        <div class="values members" id="values">
+              <h3>Value Members</h3>
+              <ol><li visbl="pub" name="scala.AnyRef#!=" data-isabs="false">
+      <a id="!=(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: $bang$eq">!=</span><span class="params">(<span name="arg0">arg0: AnyRef</span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="scala.Any#!=" data-isabs="false">
+      <a id="!=(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: $bang$eq">!=</span><span class="params">(<span name="arg0">arg0: <span name="scala.Any" class="extype">Any</span></span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef###" data-isabs="false">
+      <a id="##():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: $hash$hash">##</span><span class="params">()</span><span class="result">: <span name="scala.Int" class="extype">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#==" data-isabs="false">
+      <a id="==(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: $eq$eq">==</span><span class="params">(<span name="arg0">arg0: AnyRef</span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="scala.Any#==" data-isabs="false">
+      <a id="==(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: $eq$eq">==</span><span class="params">(<span name="arg0">arg0: <span name="scala.Any" class="extype">Any</span></span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet.Id" data-isabs="false">
+      <a id="Id:Id"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="Frontlet$Id$.html"><span class="name">Id</span></a><span class="result"> extends AbstractSlot[Any]</span>
+      </span>
+      </h4>
+      <p class="comment cmt">Every frontlet has an ID.</p>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#_map" data-isabs="false">
+      <a id="_map:MapType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">_map</span><span class="result">: MapType</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Returns underlying map.</p><div class="fullcomment"><div class="comment cmt"><p>Returns underlying map.
+todo: remove this</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>the current underlying map. If empty, a new map is created and set.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#_map_=" data-isabs="false">
+      <a id="_map_=(Map[String, Any]):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: _map_$eq">_map_=</span><span class="params">(<span name="map">map: <span name="scala.collection.mutable.Map" class="extype">Map</span>[String, <span name="scala.Any" class="extype">Any</span>]</span>)</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Alternative method to set underyling map.</p><div class="fullcomment"><div class="comment cmt"><p>Alternative method to set underyling map.
+todo: remove this.</p></div><dl class="paramcmts block"><dt class="param">map</dt><dd class="cmt"><p>the underlying map.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#_newDefaultMap" data-isabs="false">
+      <a id="_newDefaultMap:MapType"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">_newDefaultMap</span><span class="result">: MapType</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Creates a default map.</p><div class="fullcomment"><div class="comment cmt"><p>Creates a default map.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a default map to be used as underyling map.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#append" data-isabs="false">
+      <a id="append(String):Frontlet.this.type"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">append</span><span class="params">(<span name="json">json: String</span>)</span><span class="result">: Frontlet.this.type</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Adds the content of a json string to this frontlet.</p><div class="fullcomment"><div class="comment cmt"><p>Adds the content of a json string to this frontlet.</p></div><dl class="paramcmts block"><dt class="param">json</dt><dd class="cmt"><p>the json content to add.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#append" data-isabs="false">
+      <a id="append(Map[String, Any]):Frontlet.this.type"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">append</span><span class="params">(<span name="map">map: <span name="scala.collection.Map" class="extype">Map</span>[String, <span name="scala.Any" class="extype">Any</span>]</span>)</span><span class="result">: Frontlet.this.type</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Adds the content of a map to this frontlet.</p><div class="fullcomment"><div class="comment cmt"><p>Adds the content of a map to this frontlet. The method is not typesafe,
+for the time being, because this gives greater flexibility.</p></div><dl class="paramcmts block"><dt class="param">map</dt><dd class="cmt"><p>A map. If this map has overlapping keys with matching types,
+           the addition will be meaningful. Note, however, that the frontlet type
+           does not have to be the same.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#append" data-isabs="false">
+      <a id="append(Frontlet):Frontlet.this.type"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">append</span><span class="params">(<span name="frontlet">frontlet: <a name="org.riedelcastro.frontlets.Frontlet" class="extype" href="">Frontlet</a></span>)</span><span class="result">: Frontlet.this.type</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Adds the content of another frontlet to this frontlet.</p><div class="fullcomment"><div class="comment cmt"><p>Adds the content of another frontlet to this frontlet. The method is not typesafe,
+for the time being, because this gives greater flexibility.</p></div><dl class="paramcmts block"><dt class="param">frontlet</dt><dd class="cmt"><p>A frontlet. If this frontlet has overlapping keys with matching types,
+                the addition will be meaningful. Note, however, that the frontlet type
+                does not have to be the same.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="scala.Any#asInstanceOf" data-isabs="false">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: T0</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li visbl="prt" name="scala.AnyRef#clone" data-isabs="false">
+      <a id="clone():AnyRef"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: AnyRef</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a name="java.lang" class="extype" href="../../../java/lang/package.html">lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#eq" data-isabs="false">
+      <a id="eq(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: AnyRef</span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#equals" data-isabs="false">
+      <a id="equals(Any):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">equals</span><span class="params">(<span name="arg0">arg0: <span name="scala.Any" class="extype">Any</span></span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li visbl="prt" name="scala.AnyRef#finalize" data-isabs="false">
+      <a id="finalize():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a name="java.lang" class="extype" href="../../../java/lang/package.html">lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#frontletClass" data-isabs="false">
+      <a id="frontletClass:Class[Frontlet]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">frontletClass</span><span class="result">: Class[<a name="org.riedelcastro.frontlets.Frontlet" class="extype" href="">Frontlet</a>]</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Typed access to the frontlet class.</p><div class="fullcomment"><div class="comment cmt"><p>Typed access to the frontlet class.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>the Frontlet class.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#getClass" data-isabs="false">
+      <a id="getClass():java.lang.Class[_]"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: java.lang.Class[_]</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#hashCode" data-isabs="false">
+      <a id="hashCode():Int"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">hashCode</span><span class="params">()</span><span class="result">: <span name="scala.Int" class="extype">Int</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#id" data-isabs="false">
+      <a id="id:Any"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">id</span><span class="result">: <span name="scala.Any" class="extype">Any</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Returns the ID of the frontlet.</p><div class="fullcomment"><div class="comment cmt"><p>Returns the ID of the frontlet. Creates a new ID if no ID has yet been set.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>an identifier for this frontlet.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#idName" data-isabs="false">
+      <a id="idName:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">idName</span><span class="result">: <span name="java.lang.String" class="extype">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">The map key to use for the ID field.</p><div class="fullcomment"><div class="comment cmt"><p>The map key to use for the ID field.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>the key to use for the id field.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#id_=" data-isabs="false">
+      <a id="id_=(Any):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name" title="gt4s: id_$eq">id_=</span><span class="params">(<span name="i">i: <span name="scala.Any" class="extype">Any</span></span>)</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Set an id for this frontlet.</p><div class="fullcomment"><div class="comment cmt"><p>Set an id for this frontlet.</p></div><dl class="paramcmts block"><dt class="param">i</dt><dd class="cmt"><p>an ID. Generally can be any type of object, but during serialization
+         some types may not be storable by the underyling serialization framework.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="scala.Any#isInstanceOf" data-isabs="false">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#ne" data-isabs="false">
+      <a id="ne(AnyRef):Boolean"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: AnyRef</span>)</span><span class="result">: <span name="scala.Boolean" class="extype">Boolean</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#newId" data-isabs="false">
+      <a id="newId:Long"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">newId</span><span class="result">: <span name="scala.Long" class="extype">Long</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Create a new random ID.</p><div class="fullcomment"><div class="comment cmt"><p>Create a new random ID.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>random ID.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#notify" data-isabs="false">
+      <a id="notify():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#notifyAll" data-isabs="false">
+      <a id="notifyAll():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#setJSON" data-isabs="false">
+      <a id="setJSON(String):Frontlet.this.type"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setJSON</span><span class="params">(<span name="json">json: String</span>)</span><span class="result">: Frontlet.this.type</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Uses the json string to set the internal map.</p><div class="fullcomment"><div class="comment cmt"><p>Uses the json string to set the internal map.</p></div><dl class="paramcmts block"><dt class="param">json</dt><dd class="cmt"><p>the json string to parse and set the map content with.</p></dd><dt>returns</dt><dd class="cmt"><p>this frontlet.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#setMap" data-isabs="false">
+      <a id="setMap(MapType):Frontlet.this.type"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">setMap</span><span class="params">(<span name="map">map: MapType</span>)</span><span class="result">: Frontlet.this.type</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Set the underlying map for this frontlet.</p><div class="fullcomment"><div class="comment cmt"><p>Set the underlying map for this frontlet.</p></div><dl class="paramcmts block"><dt class="param">map</dt><dd class="cmt"><p>the map that will be used as underlying datastructure</p></dd><dt>returns</dt><dd class="cmt"><p>this frontlet.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#synchronized" data-isabs="false">
+      <a id="synchronized[T0](⇒ T0):T0"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ T0</span>)</span><span class="result">: T0</span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#toJSON" data-isabs="false">
+      <a id="toJSON:String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toJSON</span><span class="result">: <span name="java.lang.String" class="extype">String</span></span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Returns a JSON representation of this frontlet's map.</p><div class="fullcomment"><div class="comment cmt"><p>Returns a JSON representation of this frontlet's map.</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a JSON string representing this frontlet's content.
+</p></dd></dl></div>
+    </li><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#toString" data-isabs="false">
+      <a id="toString():String"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">toString</span><span class="params">()</span><span class="result">: String</span>
+      </span>
+      </h4>
+      <p class="shortcomment cmt">Prints out the underlying map</p><div class="fullcomment"><div class="comment cmt"><p>Prints out the underlying map</p></div><dl class="paramcmts block"><dt>returns</dt><dd class="cmt"><p>a string representation of the underyling map.
+</p></dd></dl><dl class="attributes block"> <dt>Definition Classes</dt><dd><a name="org.riedelcastro.frontlets.Frontlet" class="extype" href="">Frontlet</a> → AnyRef → Any</dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#wait" data-isabs="false">
+      <a id="wait():Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#wait" data-isabs="false">
+      <a id="wait(Long,Int):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span name="scala.Long" class="extype">Long</span></span>, <span name="arg1">arg1: <span name="scala.Int" class="extype">Int</span></span>)</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li visbl="pub" name="scala.AnyRef#wait" data-isabs="false">
+      <a id="wait(Long):Unit"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <span name="scala.Long" class="extype">Long</span></span>)</span><span class="result">: <span name="scala.Unit" class="extype">Unit</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li></ol>
+            </div>
+
+        <div class="values members" id="values">
+              <h3>Deprecated Value Members</h3>
+              <ol><li visbl="pub" name="org.riedelcastro.frontlets.Frontlet#_rawGet" data-isabs="false">
+      <a id="_rawGet(String):Any"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name deprecated" title="Deprecated: (Since version 0.1) use _map instead">_rawGet</span><span class="params">(<span name="name">name: String</span>)</span><span class="result">: <span name="scala.Any" class="extype">Any</span></span>
+      </span>
+      </h4>
+      <div class="fullcomment"><dl class="attributes block"> <dt>Annotations</dt><dd>
+                <span class="name">@deprecated</span>
+              
+        </dd><dt>Deprecated</dt><dd class="cmt"><p><i>(Since version 0.1)</i> use _map instead</p></dd></dl></div>
+    </li></ol>
+            </div>
+        </div>
+
+        <div id="inheritedMembers">
+        <div name="scala.AnyRef" class="parent">
+              <h3>Inherited from AnyRef</h3>
+            </div><div name="scala.Any" class="parent">
+              <h3>Inherited from <span name="scala.Any" class="extype">Any</span></h3>
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+
+
+    </body>
+      </html>
