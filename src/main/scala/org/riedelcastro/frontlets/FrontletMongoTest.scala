@@ -34,19 +34,19 @@ object FrontletMongoTest {
     val kid = new Person
 
     james.name := "James"
-    james.id = 1
+    james.Id := 1
     james.age := 50
     james.hobbies := Seq("photography", "soccer")
     james.address := address
 
     laura.name := "Laura"
-    laura.id = 2
+    laura.Id := 2
     laura.age := 20
     laura.hobbies := Seq("James")
     laura.address := address
 
     kid.name := "Kid"
-    kid.id = 3
+    kid.Id := 3
 
     //reference attributes
     james.spouse ::= laura
@@ -71,18 +71,18 @@ object FrontletMongoTest {
     persons += kid
 
     //find all persons with name = "James" and set their name slot to "Jamie"
-    persons.update(_.name.set("James"), _.name.update("Jamie"))
+    persons.update(_.name("James"), _.name.update("Jamie"))
 
     //iterate over all persons in the collection
     for (p <- persons) {
-      println(p._map)
+      println(p.asMap)
     }
 
     //find all people with age == 50 but only return their age and name slots.
     val queryResult = persons.query(_.age(50), _.age.select.name.select)
     //    val queryResult = persons.query(_.age.set(50))
     for (p <- queryResult) {
-      println(p._map)
+      println(p.asMap)
     }
 
     println("*** GT query:")
@@ -90,7 +90,7 @@ object FrontletMongoTest {
 
     //test a delta update, laura turns 21 and is also interested in Rick!
     val updatedLaura = new Person
-    updatedLaura.id = 2
+    updatedLaura.Id := 2
     updatedLaura.age := 21
     updatedLaura.hobbies := Seq("James", "Rick!")
     updatedLaura.address := address
@@ -104,8 +104,8 @@ object FrontletMongoTest {
     //test batch id query
     println("****")
     println(persons.query(_.hobbies.contains("James")).mkString("\n"))
-    println(persons.query(_.idsIn(Seq(1, 2))).mkString("\n"))
-    println(persons.query(_.idIs(1)).mkString("\n"))
+    println(persons.query(_.Id.valuesIn(Seq(1, 2))).mkString("\n"))
+    println(persons.query(_.Id(1)).mkString("\n"))
 
     //the graph loader loads a graph rooted around "james" by incrementally and recursively instantiating
     //the spouse of every person in the graph.
@@ -166,10 +166,10 @@ object FrontletMongoTest {
     })
 
     //these :=! calls inform the indexer of changes
-    james.age :=! 51
-    james.name :=! "Jamison"
-
-    println(indexer.index)
+//    james.age :=! 51
+//    james.name :=! "Jamison"
+//
+//    println(indexer.index)
 
   }
 }

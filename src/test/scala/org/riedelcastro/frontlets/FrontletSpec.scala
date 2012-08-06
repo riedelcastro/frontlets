@@ -29,7 +29,7 @@ class FrontletSpec extends FunSpec with MustMatchers{
     it("should store the value assigned to a slot in the underlying map") {
       val person = new Person()
       person.age := 36
-      person._map("age") must be (36)
+      person.asMap("age") must be (36)
     }
     it("should load and write json strings") {
       val person1 = new Person().age(36).address.create(_.number(1).street("Broadway")).hobbies(Seq("ping-pong"))

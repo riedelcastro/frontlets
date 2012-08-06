@@ -43,13 +43,25 @@ trait AbstractFrontlet {
 
   def asMap: GenericMap
 
+  def toJSON = FrontletJacksonMapper.writeValueAsString(asMap)
+
+    /**
+     * Uses the json string to set the internal map.
+     * @param json the json string to parse and set the map content with.
+     * @return this frontlet.
+     */
+    def setJSON(json: String): FrontletType = {
+      setMap(FrontletJacksonMapper.readValue[mutable.Map[String, Any]](json))
+    }
+
+
   final def id = Id()
 
   /**
    * Typed access to the frontlet class.
    * @return the Frontlet class.
    */
-  def frontletClass = getClass.asInstanceOf[Class[Frontlet]]
+  def frontletClass = getClass.asInstanceOf[Class[AbstractFrontlet]]
 
   /**
    * A Frontlet has a collection of slots (or fields) that store the attributes of the
@@ -96,16 +108,10 @@ trait AbstractFrontlet {
    * Every frontlet has an ID. This ID is itself a field of the underlying map, and hence
    * can also be accessed through a slot.
    */
-  object Id extends AbstractSlot[Any] {
+  object Id extends BasicSlot[Any] {
     def name = "_id"
-
+    def :=(value: Any) = assign(name,value)
     def opt = get(name)
-
-    def :=(newId: Any): FrontletType = assign(name, newId)
-
-    def apply(newId: Any): FrontletType = {
-      this := (newId)
-    }
   }
 
   //  val idSlot = new IdSlot
@@ -169,7 +175,7 @@ trait AbstractFrontlet {
     }
 
     //todo: this is probably very slow, as I need access the manifest, erasure, create new object etc.
-    def value2(implicit cache: collection.Map[(Class[Frontlet], String, Any), Iterable[Frontlet]]) = {
+    def value2(implicit cache: collection.Map[(Class[AbstractFrontlet], String, Any), Iterable[AbstractFrontlet]]) = {
       val foreignFrontlet = m.erasure.newInstance().asInstanceOf[A]
       val foreignSlot = slot(foreignFrontlet)
       cache((foreignFrontlet.frontletClass, foreignSlot.name, frontlet.id)).asInstanceOf[Iterable[A]]
@@ -179,7 +185,7 @@ trait AbstractFrontlet {
 
     def target = Some(frontlet.id)
 
-    def manifest = m.asInstanceOf[Manifest[Frontlet]]
+    def manifest = m.asInstanceOf[Manifest[AbstractFrontlet]]
 
     def frontlet: thisFrontlet.type = thisFrontlet
 
@@ -187,10 +193,9 @@ trait AbstractFrontlet {
 
   /**
    * Default implementation of an AbstractSlot.
-   * @param name the name of the slot.
    * @tparam T the type of the attribute.
    */
-  abstract class Slot[T](val name: String) extends AbstractSlot[T] {
+  abstract class BasicSlot[T] extends AbstractSlot[T] {
     /**
      * Set the value for this slot.
      * @param value value to set.
@@ -233,9 +238,21 @@ trait AbstractFrontlet {
       }
     }
 
+    /**
+     * Set a value for this slot but inform the provided hook before this happens.
+     * @param value the value to set.
+     * @param preHook the hook to call before setting the value.
+     */
+    def :=!(value: T)(implicit preHook: Function2[AbstractFrontlet#AbstractSlot[Any], Any, Unit]) = {
+      preHook(this, value)
+      this := value
+    }
+
 
     override def toString = name + ":" + get(name)
   }
+
+  abstract class Slot[T](val name:String) extends BasicSlot[T]
 
   /**
    * A slot containing primitive values (ints, strings, booleans etc.).
@@ -353,7 +370,7 @@ trait AbstractFrontlet {
     def slot = (a: A) => a.Id
 
     def :=(ref: Any) = {
-      if (ref.isInstanceOf[Frontlet]) sys.error("Use ::= to set RefSlot by a Frontlet")
+      if (ref.isInstanceOf[AbstractFrontlet]) sys.error("Use ::= to set RefSlot by a Frontlet")
       assign(name, ref)
     }
 
@@ -376,7 +393,7 @@ trait AbstractFrontlet {
      * @param tr mapping from ids to frontlets.
      * @return the object associated with the given id in the given mapping.
      */
-    def deref(implicit tr: scala.collection.Map[Any, Frontlet]) = tr(value).asInstanceOf[A]
+    def deref(implicit tr: scala.collection.Map[Any, AbstractFrontlet]) = tr(value).asInstanceOf[A]
 
     //    def ->(coll:MongoFrontletCollection[A]):GraphLoader.SlotInCollection[A] = GraphLoader.SlotInCollection(this,coll)
   }
@@ -454,7 +471,7 @@ class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFrontlet {
 
 }
 
-class MutableFrontlet extends AbstractFrontlet {
+class Frontlet extends AbstractFrontlet {
   type MapType = mutable.Map[String, Any]
   private var map: MapType = null
   type FrontletType = this.type
@@ -470,7 +487,8 @@ class MutableFrontlet extends AbstractFrontlet {
     map match {
       case m: mutable.Map[_, _] => this.map = m.asInstanceOf[MapType]
       case _ => {
-        this.map = new mutable.HashMap[String, Any]; this.map ++= map
+        this.map = new mutable.HashMap[String, Any];
+        this.map ++= map
       }
     }
     this

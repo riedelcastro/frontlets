@@ -1,19 +1,20 @@
 package org.riedelcastro.frontlets
 
 import annotation.tailrec
-import scala.collection.{MapProxy, Map => GenericMap, JavaConversions}
+import collection.{Map => GenericMap, mutable, MapProxy, JavaConversions}
 import collection.mutable.HashMap
 
 
 object GraphLoader {
 
-  case class SlotInCollection[+R <: Frontlet](slot: Frontlet#AbstractRefSlot[R], coll: AbstractFrontletCollection[R])
+  case class SlotInCollection[+R <: AbstractFrontlet](slot: AbstractFrontlet#AbstractRefSlot[R],
+                                                      coll: AbstractFrontletCollection[R])
 
-  type Refs = GenericMap[Any, Frontlet]
-  type Invs = Frontlet#InverseSlot[Frontlet] => Iterable[Frontlet]
+  type Refs = GenericMap[Any, AbstractFrontlet]
+  type Invs = Frontlet#InverseSlot[Frontlet] => Iterable[AbstractFrontlet]
 
   //Map from (frontlet class, attribute name, value) to the frontlets of that class with that attribute value
-  type Index = GenericMap[(Class[Frontlet], String, Any), Iterable[Frontlet]]
+  type Index = GenericMap[(Class[AbstractFrontlet], String, Any), Iterable[AbstractFrontlet]]
 
   /**
    * Loads a cache from ids to frontlets based on the root objects and a neighborhood function.
@@ -26,8 +27,8 @@ object GraphLoader {
    *         maximum depth.
    */
   @tailrec
-  def load(roots: TraversableOnce[Frontlet],
-           neighbors: PartialFunction[Frontlet, Seq[SlotInCollection[Frontlet]]],
+  def load(roots: TraversableOnce[AbstractFrontlet],
+           neighbors: PartialFunction[AbstractFrontlet, Seq[SlotInCollection[AbstractFrontlet]]],
            maxDepth: Int = Int.MaxValue,
            oldRefs: Refs = Map.empty): Refs = {
 
@@ -43,7 +44,7 @@ object GraphLoader {
       var refs = oldRefs ++ roots.map(c => c.id -> c).toMap
 
       //mapping from collections to the ids that need to be loaded
-      val colls2ids = new HashMap[AbstractFrontletCollection[Frontlet], List[Any]]
+      val colls2ids = new mutable.HashMap[AbstractFrontletCollection[AbstractFrontlet], List[Any]]
 
       //gather ids to load for each collection
       for (c <- roots) {
@@ -59,7 +60,7 @@ object GraphLoader {
       }
 
       //now do loading
-      var loaded: List[Frontlet] = Nil
+      var loaded: List[AbstractFrontlet] = Nil
       for ((coll, ids) <- colls2ids) {
         loaded = loaded ++ coll.findByIds(ids).toList
       }
@@ -70,13 +71,14 @@ object GraphLoader {
 
   }
 
-  case class InvSlotInCollection[+R <: Frontlet](invSlot: Frontlet#AbstractInverseSlot[R], coll: AbstractFrontletCollection[R])
+  case class InvSlotInCollection[+R <: AbstractFrontlet](invSlot: AbstractFrontlet#AbstractInverseSlot[R],
+                                                         coll: AbstractFrontletCollection[R])
 
 
   //
   @tailrec
-  def load2(roots: TraversableOnce[Frontlet],
-            neighbors: PartialFunction[Frontlet, Seq[InvSlotInCollection[Frontlet]]],
+  def load2(roots: TraversableOnce[AbstractFrontlet],
+            neighbors: PartialFunction[AbstractFrontlet, Seq[InvSlotInCollection[AbstractFrontlet]]],
             maxDepth: Int = Int.MaxValue,
             oldIndex: Index = Map.empty): Index = {
 
@@ -94,7 +96,7 @@ object GraphLoader {
       var graph = oldIndex ++ roots.map(c => (c.frontletClass, c.Id.name, c.id) -> Seq(c))
 
       //mapping from collections and attributes to the values that need to be queried for.
-      val collsAttr2ids = new HashMap[(InvSlotInCollection[Frontlet], String), List[Any]]
+      val collsAttr2ids = new HashMap[(InvSlotInCollection[AbstractFrontlet], String), List[Any]]
 
       //gather queries to execute
       for (c <- roots) {
@@ -102,7 +104,7 @@ object GraphLoader {
           for (slotAndColl <- slots) {
             val invSlot = slotAndColl.invSlot
             val foreignSlot = invSlot.foreignSlot(slotAndColl.coll.prototype)
-            val foreignFrontletClass = foreignSlot.frontlet.getClass.asInstanceOf[Class[Frontlet]]
+            val foreignFrontletClass = foreignSlot.frontlet.getClass.asInstanceOf[Class[AbstractFrontlet]]
             for (target <- invSlot.target) {
               val attrName = foreignSlot.name
               if (!graph.isDefinedAt((foreignFrontletClass, attrName, target))) {
@@ -114,7 +116,7 @@ object GraphLoader {
       }
       //now do the loading
       //todo: for every loaded frontlet we should also add the (frontlet.class,"_id", frontlet.id) -> frontlet mapping
-      var loaded: List[Frontlet] = Nil
+      var loaded: List[AbstractFrontlet] = Nil
       for (((coll, attrName), targets) <- collsAttr2ids) {
         val prototype = coll.coll.prototype
         val foreignClass = prototype.frontletClass
@@ -147,11 +149,11 @@ object GraphLoader {
 
   def toRefs(index: Index) = index.filter(_._1._2 == "_id").map(pair => pair._1._3 -> pair._2.head)
 
-  class IndexBasedInverter(index: Index) extends (Frontlet#InverseSlot[Frontlet] => Iterable[Frontlet]) {
-    val prototypeCache = new HashMap[Manifest[Frontlet], Frontlet]
+  class IndexBasedInverter(index: Index) extends (AbstractFrontlet#InverseSlot[AbstractFrontlet] => Iterable[AbstractFrontlet]) {
+    val prototypeCache = new mutable.HashMap[Manifest[AbstractFrontlet], AbstractFrontlet]
 
-    def apply(v1: Frontlet#InverseSlot[Frontlet]) = {
-      val prototype = prototypeCache.getOrElseUpdate(v1.manifest, v1.manifest.erasure.newInstance().asInstanceOf[Frontlet])
+    def apply(v1: AbstractFrontlet#InverseSlot[AbstractFrontlet]) = {
+      val prototype = prototypeCache.getOrElseUpdate(v1.manifest, v1.manifest.erasure.newInstance().asInstanceOf[AbstractFrontlet])
       val prototypeClass = prototype.frontletClass
       val attrName = v1.slot(prototype).name
       index((prototypeClass, attrName, v1.target.get))

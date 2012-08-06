@@ -16,7 +16,7 @@ import scala.Predef._
  *
  * @tparam C Frontlet type of collection.
  */
-trait AbstractFrontletCollection[+C <: Frontlet] extends Iterable[C] {
+trait AbstractFrontletCollection[+C <: AbstractFrontlet] extends Iterable[C] {
 
   /**
    * Find all frontlets for which the id is within the given set of ids.
@@ -46,7 +46,7 @@ trait AbstractFrontletCollection[+C <: Frontlet] extends Iterable[C] {
    * @return all frontlets in this collection for which the given slot has one of the given
    *         values.
    */
-  def findBySlot[T](field: C => Frontlet#Slot[T], values: Seq[T]): Iterator[C]
+  def findBySlot[T](field: C => AbstractFrontlet#Slot[T], values: Seq[T]): Iterator[C]
 
   /**
    * A prototype frontlet of the type this collection contains.
@@ -59,7 +59,7 @@ trait AbstractFrontletCollection[+C <: Frontlet] extends Iterable[C] {
  * A frontlet collection that can be modified (hence not covariant anymore).
  * @tparam C Frontlet type of collection.
  */
-trait MutableFrontletCollection[C <: Frontlet] extends AbstractFrontletCollection[C] {
+trait MutableFrontletCollection[C <: AbstractFrontlet] extends AbstractFrontletCollection[C] {
   /**
    * Assuming that the collection contains the old-frontlet, this operation changes
    * the old-frontlet to be in the state of the new frontlet. This assumes that
@@ -104,9 +104,9 @@ trait MutableFrontletCollection[C <: Frontlet] extends AbstractFrontletCollectio
  * @tparam C the type of the frontlets this collection stores.
  * @author sriedel
  */
-class MongoFrontletCollection[C <: Frontlet](val coll: DBCollection,
-                                             val constructor: () => C,
-                                             val indices: C => Seq[Seq[C#AbstractSlot[Any]]] = (c: C) => Seq.empty[Seq[C#AbstractSlot[Any]]])
+class MongoFrontletCollection[C <: AbstractFrontlet](val coll: DBCollection,
+                                                     val constructor: () => C,
+                                                     val indices: C => Seq[Seq[C#AbstractSlot[Any]]] = (c: C) => Seq.empty[Seq[C#AbstractSlot[Any]]])
   extends MutableFrontletCollection[C] with MongoFrontletConverter[C] {
 
   import MongoFrontletConverter._
@@ -201,10 +201,10 @@ class MongoFrontletCollection[C <: Frontlet](val coll: DBCollection,
    */
   def updateDelta(oldFrontlet: C, newFrontlet: C) = {
     require(oldFrontlet.id == newFrontlet.id)
-    val keys = oldFrontlet._map.keySet ++ newFrontlet._map.keySet
+    val keys = oldFrontlet.asMap.keySet ++ newFrontlet.asMap.keySet
     val insertDBO = new BasicDBObject()
     for (key <- keys; if (key != "_id")) {
-      val mod = modification(oldFrontlet._map.get(key), newFrontlet._map.get(key))
+      val mod = modification(oldFrontlet.get(key), newFrontlet.get(key))
       val bag = insertDBO.getOrElseUpdate(mod.op, new BasicDBObject()).asInstanceOf[DBObject]
       bag.put(key, mod.value)
     }
@@ -228,11 +228,11 @@ class MongoFrontletCollection[C <: Frontlet](val coll: DBCollection,
   }
 
   def findByIds(ids: Seq[Any]) = {
-    query(new MongoFrontlet(_).idsIn(ids))
+    query((c:C) => new MongoSlot(c.Id).valuesIn(ids).asInstanceOf[C])
   }
 
-  def findBySlot[T](field: (C) => Frontlet#Slot[T], values: Seq[T]) = {
-    query(c => new MongoSlot[Frontlet, T](field(c)).valuesIn(values).asInstanceOf[C])
+  def findBySlot[T](field: (C) => AbstractFrontlet#Slot[T], values: Seq[T]) = {
+    query(c => new MongoSlot[AbstractFrontlet, T](field(c)).valuesIn(values).asInstanceOf[C])
   }
 
 
@@ -311,7 +311,7 @@ class MongoFrontletCollection[C <: Frontlet](val coll: DBCollection,
  * mongo documents are converted to frontlets.
  * @tparam C the type of frontlets to convert to.
  */
-trait MongoFrontletConverter[C <: Frontlet] {
+trait MongoFrontletConverter[C <: AbstractFrontlet] {
   /**
    * Converts a mongodb document to a frontlet
    * @param dbo the mongodb doc.
@@ -354,19 +354,19 @@ trait LazyFrontletConverter[C <: Frontlet] extends MongoFrontletConverter[C] {
  */
 object MongoFrontletConverter {
 
-  def eagerDBO(frontlet: Frontlet): DBObject = {
-    toMongo(frontlet._map).asInstanceOf[DBObject]
+  def eagerDBO(frontlet: AbstractFrontlet): DBObject = {
+    toMongo(frontlet.asMap).asInstanceOf[DBObject]
   }
 
-  def eagerFrontlet[C <: Frontlet](dbo: DBObject, constructor: () => C): C = {
+  def eagerFrontlet[C <: AbstractFrontlet](dbo: DBObject, constructor: () => C): C = {
     val c = constructor()
-    c._map = toFrontlet(dbo).asInstanceOf[mutable.Map[String, Any]]
+    c.setMap(toFrontlet(dbo).asInstanceOf[mutable.Map[String, Any]])
     c
   }
 
-  def lazyFrontlet[C <: Frontlet](dbo: DBObject, constructor: () => C): C = {
+  def lazyFrontlet[C <: AbstractFrontlet](dbo: DBObject, constructor: () => C): C = {
     val c = constructor()
-    c._map = toLazyFrontlet(dbo).asInstanceOf[mutable.Map[String, Any]]
+    c.setMap(toLazyFrontlet(dbo).asInstanceOf[mutable.Map[String, Any]])
     c
   }
 
@@ -418,50 +418,35 @@ object MongoFrontletConverter {
  * @param frontlet the frontlet to wrap around
  * @tparam C the type of frontlet.
  */
-class MongoFrontlet[C <: Frontlet](val frontlet: C) {
-  /**
-   * Create a query that matches frontlets with the given id.
-   * @param id the id for matching frontlets to have.
-   * @return the encompassing query frontlet itself.
-   */
-  def idIs(id: Any): frontlet.type = {
-    frontlet._map("_id") = id
-    frontlet
-  }
-
-  /**
-   * Create a query that matches frontlets that have one of the provided ids.
-   * @param ids the ids for matching frontlets to have.
-   * @return the encompassing query frontlet itself.
-   */
-  def idsIn(ids: Seq[Any]): frontlet.type = {
-    frontlet._map("_id") = Map("$in" -> ids)
-    frontlet
-  }
-}
-
-class MongoIntSlot[C <: Frontlet](val slot: C#IntSlot) {
-
-  def comparator(comp:String, that:Int):C = {
-    slot.frontlet._map(slot.name) = Map(comp -> that)
-    slot.frontlet
-  }
-
-  def $gt(that:Int):C = comparator("$gt",that)
-  def $lt(that:Int):C = comparator("$lt",that)
-  def $gte(that:Int):C = comparator("$gte",that)
-  def $lte(that:Int):C = comparator("$lte",that)
+class MongoFrontlet[C <: AbstractFrontlet](val frontlet: C) {
 
 
 }
 
-  /**
+class MongoIntSlot[C <: AbstractFrontlet](val slot: C#IntSlot) {
+
+  def comparator(comp: String, that: Int): C#FrontletType = {
+    slot.frontlet.assign(slot.name, comp -> that)
+  }
+
+  def $gt(that: Int) = comparator("$gt", that)
+
+  def $lt(that: Int) = comparator("$lt", that)
+
+  def $gte(that: Int) = comparator("$gte", that)
+
+  def $lte(that: Int) = comparator("$lte", that)
+
+
+}
+
+/**
  * A slot that can do mongo specific operations
  * @param slot the original slot in the frontlet
  * @tparam C the frontlet type.
  * @tparam V the value type of the slot.
  */
-class MongoSlot[C <: Frontlet, V](val slot: C#Slot[V]) {
+class MongoSlot[C <: AbstractFrontlet, V](val slot: C#BasicSlot[V]) {
 
   /**
    * Changes the query frontlet to select/project the given slot.
@@ -479,24 +464,9 @@ class MongoSlot[C <: Frontlet, V](val slot: C#Slot[V]) {
    * @param value the new slot value for matching frontlets to be set to.
    * @return the encompassing query frontlet.
    */
-  def update(value: V): C = {
-    //todo: need to fix frontlets to avoid try-catch
-    val nestedMap = try {
-      val oldMap = slot.frontlet._map("$set").asInstanceOf[scala.collection.mutable.Map[String, Any]]
-      if (oldMap == null) {
-        val map = new mutable.HashMap[String, Any]
-        slot.frontlet._map.update("$set", map)
-        map
-      } else oldMap
-    } catch {
-      case _: Throwable => {
-        val map = new mutable.HashMap[String, Any]
-        slot.frontlet._map.update("$set", map)
-        map
-      }
-    }
-    nestedMap(slot.name) = value
-    slot.frontlet
+  def update(value: V): C#FrontletType = {
+    val map = slot.frontlet.get("$set").getOrElse(Map.empty).asInstanceOf[Map[String, Any]]
+    slot.frontlet.assign("$set", map + (slot.name -> value))
   }
 
   /**
@@ -505,9 +475,8 @@ class MongoSlot[C <: Frontlet, V](val slot: C#Slot[V]) {
    * @param values the values to match against.
    * @return the encompassing query frontlet.
    */
-  def valuesIn(values: Seq[V]): C = {
-    slot.frontlet._map(slot.name) = Map("$in" -> values)
-    slot.frontlet
+  def valuesIn(values: Seq[V]): C#FrontletType = {
+    slot.rawPut(Map("$in" -> values))
   }
 
   /**
@@ -516,15 +485,14 @@ class MongoSlot[C <: Frontlet, V](val slot: C#Slot[V]) {
    *            requires the frontlet to not have the given slot.
    * @return the encompassing query frontlet.
    */
-  def exists(yes: Boolean): C = {
-    slot.frontlet._map(slot.name) = Map("$exists" -> yes)
-    slot.frontlet
+  def exists(yes: Boolean): C#FrontletType = {
+    slot.rawPut(Map("$exists" -> yes))
   }
 
 }
 
 
-class MongoRefSlot[C <: Frontlet, A <: Frontlet](val slot: C#AbstractRefSlot[A]) {
+class MongoRefSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](val slot: C#AbstractRefSlot[A]) {
   def in(coll: MongoFrontletCollection[A]): GraphLoader.SlotInCollection[A] = GraphLoader.SlotInCollection(slot, coll)
 
 }
@@ -535,7 +503,7 @@ class MongoRefSlot[C <: Frontlet, A <: Frontlet](val slot: C#AbstractRefSlot[A])
  * @tparam C the type of frontlet the attribute is part of
  * @tparam A the type objects in the list.
  */
-class MongoPrimitiveListSlot[C <: Frontlet, A](val slot: C#PrimitiveListSlot[A]) {
+class MongoPrimitiveListSlot[C <: AbstractFrontlet, A](val slot: C#PrimitiveListSlot[A]) {
   /**
    * Returns a frontlet that mongo can use to match documents that have the given value as member in the list.
    * @param a the element that needs to be in the list.
@@ -549,8 +517,9 @@ class MongoPrimitiveListSlot[C <: Frontlet, A](val slot: C#PrimitiveListSlot[A])
 }
 
 
-class MongoInvSlot[C <: Frontlet, A <: Frontlet](val slot: C#AbstractInverseSlot[A]) {
-  def of(coll: MongoFrontletCollection[A]): GraphLoader.InvSlotInCollection[A] = GraphLoader.InvSlotInCollection(slot, coll)
+class MongoInvSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](val slot: C#AbstractInverseSlot[A]) {
+  def of(coll: MongoFrontletCollection[A]): GraphLoader.InvSlotInCollection[A] =
+    GraphLoader.InvSlotInCollection(slot, coll)
 }
 
 
@@ -598,26 +567,26 @@ class BSONMap(val bson: BSONObject) extends collection.mutable.Map[String, Any] 
  */
 object MongoFrontletImplicits {
 
-  implicit def toMongoSlot[C <: Frontlet, V](slot: C#Slot[V]) = new MongoSlot(slot)
+  implicit def toMongoSlot[C <: AbstractFrontlet, V](slot: C#BasicSlot[V]) = new MongoSlot(slot)
 
-  implicit def toMongoIntSlot[C <: Frontlet, V](slot: C#IntSlot) = new MongoIntSlot(slot)
+  implicit def toMongoIntSlot[C <: AbstractFrontlet, V](slot: C#IntSlot) = new MongoIntSlot(slot)
 
-  implicit def toMongoRefSlot[C <: Frontlet, A <: Frontlet](slot: C#AbstractRefSlot[A]) = new MongoRefSlot(slot)
+  implicit def toMongoRefSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](slot: C#AbstractRefSlot[A]) = new MongoRefSlot(slot)
 
-  implicit def toMongoInvSlot[C <: Frontlet, A <: Frontlet](slot: C#AbstractInverseSlot[A]) = new MongoInvSlot(slot)
+  implicit def toMongoInvSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](slot: C#AbstractInverseSlot[A]) = new MongoInvSlot(slot)
 
-  implicit def toMongoPrimitiveListSlot[C <: Frontlet, A](slot: C#PrimitiveListSlot[A]) = new MongoPrimitiveListSlot(slot)
+  implicit def toMongoPrimitiveListSlot[C <: AbstractFrontlet, A](slot: C#PrimitiveListSlot[A]) = new MongoPrimitiveListSlot(slot)
 
-  implicit def toMongoFrontlet[C <: Frontlet](frontlet: C) = new MongoFrontlet(frontlet)
+  implicit def toMongoFrontlet[C <: AbstractFrontlet](frontlet: C) = new MongoFrontlet(frontlet)
 
 }
 
 object DerefImplicits {
-  implicit def toMongoRefSlot[C <: Frontlet, A <: Frontlet](slot: C#AbstractRefSlot[A]) = new MongoRefSlot(slot) {
+  implicit def toMongoRefSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](slot: C#AbstractRefSlot[A]) = new MongoRefSlot(slot) {
     def -->(implicit cache: GenericMap[Any, Frontlet]): A = slot.deref(cache)
   }
 
-  implicit def toMongoInvSlot[C <: Frontlet, A <: Frontlet](slot: C#InverseSlot[A]) = new MongoInvSlot(slot) {
+  implicit def toMongoInvSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](slot: C#InverseSlot[A]) = new MongoInvSlot(slot) {
     //    def -->(implicit cache: GenericMap[Any, Frontlet]): A = slot.deref(cache)
   }
 
@@ -646,27 +615,27 @@ class CachedFunction[F, T](val delegate: F => T) extends Map[F, T] {
   }
 }
 
-class LazyInverter(val frontlets: PartialFunction[Manifest[Frontlet], Iterable[Frontlet]])
-  extends (Frontlet#InverseSlot[Frontlet] => Iterable[Frontlet]) {
-  def apply(slot: Frontlet#InverseSlot[Frontlet]) = {
-    val typed = slot.asInstanceOf[Frontlet#InverseSlot[Frontlet]]
+class LazyInverter(val frontlets: PartialFunction[Manifest[AbstractFrontlet], Iterable[AbstractFrontlet]])
+  extends (AbstractFrontlet#InverseSlot[AbstractFrontlet] => Iterable[AbstractFrontlet]) {
+  def apply(slot: AbstractFrontlet#InverseSlot[AbstractFrontlet]) = {
+    val typed = slot.asInstanceOf[AbstractFrontlet#InverseSlot[AbstractFrontlet]]
     val result = frontlets.lift(slot.manifest).getOrElse(Nil).filter(c => typed.slot(c).opt == Some(typed.frontlet.id))
     result
   }
 }
 
-class IndexedLazyInverter(val frontlets: PartialFunction[Manifest[Frontlet], Iterable[Frontlet]])
-  extends (Frontlet#InverseSlot[Frontlet] => Iterable[Frontlet]) {
+class IndexedLazyInverter(val frontlets: PartialFunction[Manifest[AbstractFrontlet], Iterable[AbstractFrontlet]])
+  extends (AbstractFrontlet#InverseSlot[AbstractFrontlet] => Iterable[AbstractFrontlet]) {
 
 
-  val index = new mutable.HashMap[(Frontlet#AbstractRefSlot[Frontlet], Any), Seq[Frontlet]]
-  val indexed = new mutable.HashSet[Frontlet#AbstractRefSlot[Frontlet]]
-  val prototypes = new mutable.HashMap[Manifest[Frontlet], Option[Frontlet]] //frontlets.map(p => p._1 -> p._2.headOption)
+  val index = new mutable.HashMap[(AbstractFrontlet#AbstractRefSlot[AbstractFrontlet], Any), Seq[AbstractFrontlet]]
+  val indexed = new mutable.HashSet[AbstractFrontlet#AbstractRefSlot[AbstractFrontlet]]
+  val prototypes = new mutable.HashMap[Manifest[AbstractFrontlet], Option[AbstractFrontlet]] //frontlets.map(p => p._1 -> p._2.headOption)
 
-  def findFrontletsWhereRefSlotIs(refSlotFunction: Frontlet => Frontlet#AbstractRefSlot[Frontlet],
+  def findFrontletsWhereRefSlotIs(refSlotFunction: AbstractFrontlet => AbstractFrontlet#AbstractRefSlot[AbstractFrontlet],
                                   id: Any,
-                                  inWhere: Iterable[Frontlet],
-                                  ofType: Manifest[Frontlet]) = {
+                                  inWhere: Iterable[AbstractFrontlet],
+                                  ofType: Manifest[AbstractFrontlet]) = {
     {
       for (prototype <- prototypes.getOrElseUpdate(ofType, frontlets(ofType).headOption);
            refSlot = refSlotFunction(prototype)) yield {
@@ -681,20 +650,20 @@ class IndexedLazyInverter(val frontlets: PartialFunction[Manifest[Frontlet], Ite
     }.getOrElse(Nil)
   }
 
-  def apply(slot: Frontlet#InverseSlot[Frontlet]) = {
-    val typed = slot.asInstanceOf[Frontlet#InverseSlot[Frontlet]]
+  def apply(slot: AbstractFrontlet#InverseSlot[AbstractFrontlet]) = {
+    val typed = slot.asInstanceOf[AbstractFrontlet#InverseSlot[AbstractFrontlet]]
     findFrontletsWhereRefSlotIs(typed.slot, typed.frontlet.id, frontlets.lift(typed.manifest).getOrElse(Nil), typed.manifest)
   }
 }
 
 
-class LazyMongoInverter(val frontlets: PartialFunction[Manifest[Frontlet], AbstractFrontletCollection[Frontlet]],
-                        val cache: GenericMap[Any, Frontlet] = Map.empty)
-  extends (Frontlet#InverseSlot[Frontlet] => Iterable[Frontlet]) {
-  def apply(slot: Frontlet#InverseSlot[Frontlet]) = {
-    val typed = slot.asInstanceOf[Frontlet#InverseSlot[Frontlet]]
+class LazyMongoInverter(val frontlets: PartialFunction[Manifest[AbstractFrontlet], AbstractFrontletCollection[AbstractFrontlet]],
+                        val cache: GenericMap[Any, AbstractFrontlet] = Map.empty)
+  extends (AbstractFrontlet#InverseSlot[AbstractFrontlet] => Iterable[AbstractFrontlet]) {
+  def apply(slot: AbstractFrontlet#InverseSlot[AbstractFrontlet]) = {
+    val typed = slot.asInstanceOf[AbstractFrontlet#InverseSlot[AbstractFrontlet]]
     val found = for (coll <- frontlets.lift(slot.manifest)) yield {
-      val raw = coll.findBySlot(c => slot.slot(c).asInstanceOf[Frontlet#RefSlot[Frontlet]], Seq(typed.frontlet.id))
+      val raw = coll.findBySlot(c => slot.slot(c).asInstanceOf[AbstractFrontlet#RefSlot[AbstractFrontlet]], Seq(typed.frontlet.id))
       raw.map(c => cache.getOrElse(c.id, c)).toSeq
     }
     found.getOrElse(Nil)
