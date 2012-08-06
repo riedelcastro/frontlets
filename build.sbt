@@ -34,10 +34,22 @@ publishTo <<= (version) { version: String =>
   else                                   Some("releases"  at iesl + "releases/")
 }
 
+
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 releaseSettings
 
+site.settings
+
+site.includeScaladoc()
+
+//seq(site.settings:_*)
+
+seq(ghpages.settings:_*)
+
+git.remoteRepo := "git@github.com:riedelcastro/frontlets.git"
+
 //fork in run := true
 
 //javaOptions in run += "-Xmx8G"
+

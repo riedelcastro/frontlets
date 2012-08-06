@@ -1,204 +1,55 @@
-/* Copyright (C) 2008-2010 University of Massachusetts Amherst,
-   Department of Computer Science.
-   This file is part of "FACTORIE" (Factor graphs, Imperative, Extensible)
-   http://factorie.cs.umass.edu, http://code.google.com/p/factorie/
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License. */
-
 package org.riedelcastro.frontlets
 
 import collection.mutable
-
-
+import scala.collection
 
 /**
- * A Frontlet provides typed access to an underlying Map data-structure. This map can come
- * from various sources, such as JSON objects or MongoDB objects.
- *
- * Frontlets are designed
- * to make access to (often persistent) data safe, easy and generic. This comes at
- * the price of efficiency, so clients should not access Frontlets in inner-loops
- * of computations. In practice this may require a further conversion step from Frontlets
- * into a more efficient representation.
+ * @author riedelcastro
  */
-class Frontlet {
+
+object Playground {
+
+  def main(args: Array[String]) {
+    trait Test[T <: Test[T]] {
+      def create(): T
+    }
+    class A extends Test[A] {
+      def create() = new A
+    }
+    class B extends Test[B] {
+      def create() = getClass.getConstructor().newInstance().asInstanceOf[B]
+    }
+  }
+
+}
+
+/**
+ * The AbstractFrontlet abstracts over the type of underlying map structure used to store the data.
+ * Most importantly, this enables both mutable and immutable frontlets (using immutable maps underneath).
+ */
+trait AbstractFrontlet {
   thisFrontlet =>
 
+  type FrontletType <: AbstractFrontlet
+  type GenericMap = collection.Map[String, Any]
 
-  //  def this(map:scala.collection.mutable.HashMap[String,Any]) = { this(); this._map = map }
-  // Managing raw underlying map that hold the data
+  def assign(key: String, value: Any): FrontletType
 
-  /**
-   * The type of underlying Map. We use the generic scala mutable Map interface.
-   * If clients want to use their own Map data structure (such as MongoDB maps) they
-   * only need to provide a wrapper mutable.Map implementation around their data.
-   */
-  type MapType = mutable.Map[String, Any]
+  def self: FrontletType
 
-  /**
-   * Set the underlying map for this frontlet.
-   * @param map the map that will be used as underlying datastructure
-   * @return this frontlet.
-   */
-  def setMap(map: MapType): this.type = {
-    _map = map
-    this
-  }
+  def get(key: String): Option[Any]
 
-  /**
-   * Uses the json string to set the internal map.
-   * @param json the json string to parse and set the map content with.
-   * @return this frontlet.
-   */
-  def setJSON(json: String): this.type = {
-    _map = FrontletJacksonMapper.readValue[mutable.Map[String, Any]](json)
-    this
-  }
+  def setMap(map: GenericMap): FrontletType
 
-  /**
-   * Adds the content of another frontlet to this frontlet. The method is not typesafe,
-   * for the time being, because this gives greater flexibility.
-   * @param frontlet A frontlet. If this frontlet has overlapping keys with matching types,
-   *                 the addition will be meaningful. Note, however, that the frontlet type
-   *                 does not have to be the same.
-   */
-  def append(frontlet: Frontlet): this.type = {
-    _map ++= frontlet._map
-    this
-  }
+  def asMap: GenericMap
 
-  /**
-   * Adds the content of a map to this frontlet. The method is not typesafe,
-   * for the time being, because this gives greater flexibility.
-   * @param map A map. If this map has overlapping keys with matching types,
-   *            the addition will be meaningful. Note, however, that the frontlet type
-   *            does not have to be the same.
-   */
-  def append(map: collection.Map[String, Any]): this.type = {
-    _map ++= map
-    this
-  }
-
-  /**
-   * Adds the content of a json string to this frontlet.
-   * @param json the json content to add.
-   */
-  def append(json: String): this.type = {
-    _map ++= FrontletJacksonMapper.readValue[mutable.Map[String, Any]](json)
-    this
-  }
-
-
-  /**
-   * Constructor that takes the underlying map.
-   * @param map the underlying map to use.
-   */
-  def this(map: mutable.Map[String, Any]) = {
-    this()
-    this._map = map
-  }
-
-  /**
-   * Underlying map member.
-   * todo: fix __map vs _map confusion one day.
-   */
-  private var __map: MapType = null
-
-
-  /**
-   * Returns underlying map.
-   * todo: remove this
-   * @return the current underlying map. If empty, a new map is created and set.
-   */
-  def _map = {
-    if (__map == null) __map = new mutable.HashMap[String, Any]
-    __map
-  }
-
-  /**
-   * Alternative method to set underyling map.
-   * todo: remove this.
-   * @param map the underlying map.
-   */
-  def _map_=(map: mutable.Map[String, Any]) {
-    __map = map
-  }
-
-  /**
-   * Creates a default map.
-   * @return a default map to be used as underyling map.
-   */
-  def _newDefaultMap: MapType = new scala.collection.mutable.HashMap[String, Any]
-
-  @deprecated("use _map instead", "0.1")
-  def _rawGet(name: String): Any = {
-    _map(name)
-  }
-
-  /**
-   * Prints out the underlying map
-   * @return a string representation of the underyling map.
-   */
-  override def toString = _map.toString()
-
-  /**
-   * Returns a JSON representation of this frontlet's map.
-   * @return a JSON string representing this frontlet's content.
-   */
-  def toJSON = FrontletJacksonMapper.writeValueAsString(_map)
-
-  /**
-   * The map key to use for the ID field.
-   * @return the key to use for the id field.
-   */
-  def idName = "_id"
+  final def id = Id()
 
   /**
    * Typed access to the frontlet class.
    * @return the Frontlet class.
    */
   def frontletClass = getClass.asInstanceOf[Class[Frontlet]]
-
-  /**
-   * Create a new random ID.
-   * @return random ID.
-   */
-  def newId = java.util.UUID.randomUUID.timestamp
-
-  /**
-   * Returns the ID of the frontlet. Creates a new ID if no ID has yet been set.
-   * @return an identifier for this frontlet.
-   */
-  final def id: Any = {
-    // "final" because we need to ensure that the _id gets inserted into the
-    //todo: replace with getOrElseUpdate, but write some unit test first to make sure we don't break anything.
-    var result = _map.getOrElse(idName, null) // avoid getOrElseUpdate because it will allocate a closure object
-    if (result != null) result
-    else {
-      result = newId
-      _map.update(idName, result)
-      result
-    }
-  }
-
-  //todo: maps throw exceptions when key is not defined, need to adapt requirement
-  /**
-   * Set an id for this frontlet.
-   * @param i an ID. Generally can be any type of object, but during serialization
-   *          some types may not be storable by the underyling serialization framework.
-   */
-  def id_=(i: Any) {
-    _map.update(idName, i)
-  }
-
-  // Classes for holding key:value pairs
 
   /**
    * A Frontlet has a collection of slots (or fields) that store the attributes of the
@@ -212,7 +63,7 @@ class Frontlet {
      * @return the value of slot. May throw an exception if the underlying map has
      *         no field corresponding to this slot.
      */
-    def value: T
+    def value: T = opt.get
 
     /**
      * Convenience method for more concise access to slot value.
@@ -248,21 +99,12 @@ class Frontlet {
   object Id extends AbstractSlot[Any] {
     def name = "_id"
 
-    def value = id
+    def opt = get(name)
 
-    def opt = Some(id)
+    def :=(newId: Any): FrontletType = assign(name, newId)
 
-    def :=(newId: Any) {
-      frontlet.id = newId
-    }
-
-    def set(newId: Any): thisFrontlet.type = {
-      this := newId
-      thisFrontlet
-    }
-
-    def apply(newId: Any): thisFrontlet.type = {
-      set(newId)
+    def apply(newId: Any): FrontletType = {
+      this := (newId)
     }
   }
 
@@ -276,7 +118,7 @@ class Frontlet {
    *
    * @tparam A the type of frontlets this slot contains.
    */
-  sealed trait AbstractInverseSlot[+A <: Frontlet] {
+  sealed trait AbstractInverseSlot[+A <: AbstractFrontlet] {
     /**
      * The name of this slot.
      * @return a string name.
@@ -288,7 +130,7 @@ class Frontlet {
      * for the frontlet to be in this slot.
      * @return the foreign slot.
      */
-    def foreignSlot: Frontlet => A#AbstractSlot[Any]
+    def foreignSlot: AbstractFrontlet => A#AbstractSlot[Any]
 
     /**
      * Can there be several frontlets with the target value?
@@ -310,8 +152,8 @@ class Frontlet {
    * @param m a manifest.
    * @tparam A the type of frontlets this slot contains.
    */
-  case class InverseSlot[A <: Frontlet](name: String,
-                                        slot: A => A#AbstractRefSlot[Frontlet])(implicit m: Manifest[A])
+  case class InverseSlot[A <: AbstractFrontlet](name: String,
+                                                slot: A => A#AbstractRefSlot[AbstractFrontlet])(implicit m: Manifest[A])
     extends AbstractInverseSlot[A] {
 
     /**
@@ -322,8 +164,8 @@ class Frontlet {
      *              have the given target value for the given slot.
      * @return all frontlets that are associated with this slot in the cache.
      */
-    def value(implicit cache: Frontlet#InverseSlot[Frontlet] => Iterable[Frontlet]): Iterable[A] = {
-      cache(this.asInstanceOf[InverseSlot[Frontlet]]).asInstanceOf[Iterable[A]]
+    def value(implicit cache: AbstractFrontlet#InverseSlot[AbstractFrontlet] => Iterable[AbstractFrontlet]): Iterable[A] = {
+      cache(this.asInstanceOf[InverseSlot[AbstractFrontlet]]).asInstanceOf[Iterable[A]]
     }
 
     //todo: this is probably very slow, as I need access the manifest, erasure, create new object etc.
@@ -333,7 +175,7 @@ class Frontlet {
       cache((foreignFrontlet.frontletClass, foreignSlot.name, frontlet.id)).asInstanceOf[Iterable[A]]
     }
 
-    def foreignSlot = (c: Frontlet) => slot(c.asInstanceOf[A])
+    def foreignSlot = (c: AbstractFrontlet) => slot(c.asInstanceOf[A])
 
     def target = Some(frontlet.id)
 
@@ -349,81 +191,50 @@ class Frontlet {
    * @tparam T the type of the attribute.
    */
   abstract class Slot[T](val name: String) extends AbstractSlot[T] {
-    def value: T
-
     /**
      * Set the value for this slot.
      * @param value value to set.
      */
-    def :=(value: T)
-
-    /**
-     * Set a value for this slot but inform the provided hook before this happens.
-     * @param value the value to set.
-     * @param preHook the hook to call before setting the value.
-     */
-    def :=!(value: T)(implicit preHook: Function2[Frontlet#AbstractSlot[Any], Any, Unit]) {
-      preHook(this, value)
-      this := value
-    }
+    def :=(value: T): FrontletType
 
     /**
      * Set the value and return the containing Frontlet.
      * @param value the value to set.
      * @return the frontlet this slot belongs to.
      */
-    def apply(value: T): thisFrontlet.type = set(value)
+    def apply(value: T): FrontletType = this := value
 
-
-    def opt = if (_map.isDefinedAt(name)) Some(value) else None
+    def opt: Option[T]
 
     /**
      * Set a raw value into the underlying map. Should generally only be used
      * in other library code.
      * @param value the value to be set.
      */
-    def rawPut(value: Any) {
-      _map.update(name, value)
+    def rawPut(value: Any) = {
+      assign(name, value)
     }
 
     /**
      * Does the frontlet have this slot.
      * @return true iff the underyling map has this slot.
      */
-    def isDefined: Boolean = _map.isDefinedAt(name)
+    def isDefined: Boolean = get(name).isDefined
 
     /**
      * Set the value of this slot using an option. If parameter
      * is Some(value) the value is set, if None nothing is changed.
      * @param opt the option to use.
      */
-    def :=(opt: Option[T]) {
-      for (value <- opt) this := (value)
+    def :=(opt: Option[T]): FrontletType = {
+      opt match {
+        case Some(value) => this := value
+        case None => self
+      }
     }
 
-    /**
-     * Set value of slot and return this Frontlet.
-     * @param value value to set.
-     * @return this frontlet.
-     */
-    def set(value: T): thisFrontlet.type = {
-      this := value
-      thisFrontlet
-    }
 
-    /**
-     * Set the value of this slot using an option. If parameter
-     * is Some(value) the value is set, if None nothing is changed. Returns
-     * this frontlet.
-     * @param opt the option to use.
-     * @return the encompassing frontlet.
-     */
-    def set(opt: Option[T]): thisFrontlet.type = {
-      for (value <- opt) this := value
-      thisFrontlet
-    }
-
-    override def toString = name + ":" + _map(name)
+    override def toString = name + ":" + get(name)
   }
 
   /**
@@ -432,10 +243,11 @@ class Frontlet {
    * @tparam T the type of the attribute.
    */
   abstract class PrimitiveSlot[T](n: String) extends Slot[T](n) {
-    def value: T = _map(name).asInstanceOf[T]
 
-    def :=(value: T) {
-      _map.update(name, value)
+    def opt = get(name).asInstanceOf[Option[T]]
+
+    def :=(value: T) = {
+      assign(name, value)
     }
   }
 
@@ -458,18 +270,16 @@ class Frontlet {
    */
   abstract class PrimitiveListSlot[A](override val name: String) extends Slot[Seq[A]](name) {
 
-    import collection.JavaConversions._
 
     /**
      * Returns the Seq stored in the underlying map.
      * @return the value of slot. May throw an exception if the underlying map has
      *         no field corresponding to this slot.
      */
-    def value: Seq[A] = _map(name).asInstanceOf[Seq[A]]
+    def opt: Option[Seq[A]] = get(name).asInstanceOf[Option[Seq[A]]]
 
-    def :=(value: Seq[A]) {
-      _map.update(name, value)
-    } // TODO Perhaps we should store a Map[String,Any] here instead, like BSON?  Avoids the need for conversion later
+    def :=(value: Seq[A]) = assign(name, value)
+
   }
 
   case class IntListSlot(override val name: String) extends PrimitiveListSlot[Int](name)
@@ -487,7 +297,8 @@ class Frontlet {
    *                    underyling map objects.
    * @tparam A the type of the frontlets in the list.
    */
-  case class FrontletListSlot[A <: Frontlet](override val name: String, constructor: () => A) extends Slot[Seq[A]](name) {
+  case class FrontletListSlot[A <: AbstractFrontlet](override val name: String, constructor: () => A)
+    extends Slot[Seq[A]](name) {
 
     /**
      * Returns the list of frontlets in this slot. The underlying map is expected to
@@ -496,14 +307,11 @@ class Frontlet {
      * @return the value of slot. May throw an exception if the underlying map has
      *         no field corresponding to this slot.
      */
-    def value: Seq[A] = _map(name) match {
-      case null => null
-      case s: Seq[_] => if (s.length == 0) Nil
-      else s.map(m => {
-        val c = constructor()
-        c._map = m.asInstanceOf[MapType]
-        c
-      })
+    def opt = get(name) match {
+      case Some(s: Seq[_]) =>
+        val frontlets = s.map(m => constructor().setMap(m.asInstanceOf[collection.Map[String, Any]]))
+        Some(frontlets.asInstanceOf[Seq[A]])
+      case None => None
     }
 
     /**
@@ -511,9 +319,9 @@ class Frontlet {
      * of maps in its field.
      * @param value value to set.
      */
-    def :=(value: Seq[A]) {
-      _map.update(name, value.map(c => c._map))
-    } // Actually put in the sequence of Maps, not sequence of Frontlets
+    def :=(value: Seq[A]) = {
+      assign(name, value.map(_.asMap))
+    }
   }
 
 
@@ -531,9 +339,10 @@ class Frontlet {
    * @param constructor the frontlet constructor for frontlets the slot contains.
    * @tparam A the type of frontlets this slot contains.
    */
-  case class RefSlot[A <: Frontlet](override val name: String, constructor: () => A)
+  case class RefSlot[A <: AbstractFrontlet](override val name: String, constructor: () => A)
     extends Slot[Any](name) with AbstractRefSlot[A] with AbstractInverseSlot[A] {
-    def value = _map(name)
+
+    def opt = get(name)
 
     override def unique = true
 
@@ -543,13 +352,13 @@ class Frontlet {
 
     def slot = (a: A) => a.Id
 
-    def :=(ref: Any) {
-      if (ref.isInstanceOf[Frontlet]) throw new Error("Use ::= to set RefSlot by a Frontlet");
-      _map.update(name, ref)
+    def :=(ref: Any) = {
+      if (ref.isInstanceOf[Frontlet]) sys.error("Use ::= to set RefSlot by a Frontlet")
+      assign(name, ref)
     }
 
-    def ::=(value: A) {
-      _map.update(name, value.id)
+    def ::=(value: A) = {
+      assign(name, value.Id())
     }
   }
 
@@ -557,7 +366,7 @@ class Frontlet {
    * A helper trait for libraries that need ref slots to be covariant.
    * @tparam A the type of frontlet the slot refers to.
    */
-  trait AbstractRefSlot[+A <: Frontlet] extends AbstractSlot[Any] {
+  trait AbstractRefSlot[+A <: AbstractFrontlet] extends AbstractSlot[Any] {
 
     /**
      * The value of a RefSlot is the id of the referenced frontlet. To get an actual frontlet, clients need
@@ -578,7 +387,8 @@ class Frontlet {
    * @param constructor the constructor to create the contained frontlet wrapper with.
    * @tparam A the type of frontlet the slot contains.
    */
-  case class FrontletSlot[A <: Frontlet](override val name: String, constructor: () => A) extends Slot[A](name) {
+  case class FrontletSlot[A <: AbstractFrontlet](override val name: String, constructor: () => A)
+    extends Slot[A](name) {
     /**
      * Return the frontlet contained in this slot. This assumes
      * that the underlying map has a corresponding field that contains a
@@ -586,19 +396,15 @@ class Frontlet {
      * @return the value of slot. May throw an exception if the underlying map has
      *         no field corresponding to this slot.
      */
-    def value: A = {
-      val a = constructor()
-      a._map = _map(name).asInstanceOf[MapType]
-      a
+    def opt = {
+      for (map <- get(name)) yield constructor().setMap(map.asInstanceOf[GenericMap]).asInstanceOf[A]
     }
 
     /**
      * Stores the map underlying the passed in frontlet into the underyling map of this frontlet.
      * @param value value to set.
      */
-    def :=(value: A) {
-      _map.update(name, value._map)
-    }
+    def :=(value: A) = assign(name, value.asMap)
 
     /**
      * Creates a frontlet of this slot's frontlet type, apply the given function to it, and set the slot
@@ -616,4 +422,62 @@ class Frontlet {
 
 }
 
+
+class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFrontlet {
+  this: F =>
+
+  type FrontletType = F
+
+  type MapType = Map[String, Any]
+
+  private var map: MapType = Map.empty
+
+  def create(map: GenericMap = Map.empty) = {
+    val f = getClass.getConstructor().newInstance().asInstanceOf[F]
+    f.map = f.map ++ map
+    f
+  }
+
+  def assign(key: String, value: Any) = {
+    create(map + (key -> value))
+  }
+
+  def get(key: String) = map.get(key)
+
+  def asMap = map
+
+  def setMap(map: GenericMap) = {
+    create(map)
+  }
+
+  def self: FrontletType = this
+
+}
+
+class MutableFrontlet extends AbstractFrontlet {
+  type MapType = mutable.Map[String, Any]
+  private var map: MapType = null
+  type FrontletType = this.type
+
+  def assign(key: String, value: Any) = {
+    map(key) = value
+    this
+  }
+
+  def get(key: String) = map.get(key)
+
+  def setMap(map: GenericMap) = {
+    map match {
+      case m: mutable.Map[_, _] => this.map = m.asInstanceOf[MapType]
+      case _ => {
+        this.map = new mutable.HashMap[String, Any]; this.map ++= map
+      }
+    }
+    this
+  }
+
+  def self: FrontletType = this
+
+  def asMap = map
+}
 
