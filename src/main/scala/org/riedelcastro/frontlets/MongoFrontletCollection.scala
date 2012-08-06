@@ -426,7 +426,7 @@ class MongoFrontlet[C <: AbstractFrontlet](val frontlet: C) {
 class MongoIntSlot[C <: AbstractFrontlet](val slot: C#IntSlot) {
 
   def comparator(comp: String, that: Int): C#FrontletType = {
-    slot.frontlet.assign(slot.name, comp -> that)
+    slot.frontlet.assign(slot.name, Map(comp -> that))
   }
 
   def $gt(that: Int) = comparator("$gt", that)
