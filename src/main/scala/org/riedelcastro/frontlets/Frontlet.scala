@@ -497,7 +497,7 @@ abstract class InnerFrontlet[F <: InnerFrontlet[F]] extends ImmutableFrontlet[F]
     val o = f.get(this)
     val c = getClass.getConstructor(o.getClass)
     val n = c.newInstance(o)
-    n
+    n.asInstanceOf[F]
   }
 }
 
