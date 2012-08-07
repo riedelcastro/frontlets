@@ -429,7 +429,6 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
   this: F =>
 
   type FrontletType = F
-
   type MapType = Map[String, Any]
 
   private var map: MapType = Map.empty
@@ -438,7 +437,7 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
 
   def create(map: GenericMap = Map.empty) = {
     val f = construct()
-    f.map = f.map ++ map
+    f.map = Map.empty ++ map
     f
   }
 
@@ -456,6 +455,11 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
 
   def self: FrontletType = this
 
+}
+
+abstract class OuterFrontlet[F <: OuterFrontlet[F]] extends ImmutableFrontlet[F] {
+  this: F =>
+  def construct() = getClass.newInstance().asInstanceOf[F]
 }
 
 class Frontlet extends AbstractFrontlet {
@@ -484,5 +488,16 @@ class Frontlet extends AbstractFrontlet {
   def self: FrontletType = this
 
   def asMap = map
+}
+
+abstract class InnerFrontlet[F <: InnerFrontlet[F]] extends ImmutableFrontlet[F] {
+  this: F =>
+  def construct() = {
+    val f = getClass().getDeclaredField("$outer")
+    val o = f.get(this)
+    val c = getClass.getConstructor(o.getClass)
+    val n = c.newInstance(o)
+    n
+  }
 }
 

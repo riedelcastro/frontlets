@@ -7,8 +7,7 @@ import org.scalatest.matchers.MustMatchers
 /**
  * @author riedelcastro
  */
-
-class FrontletSpec extends FunSpec with MustMatchers{
+object FrontletSpec {
   class Address extends Frontlet {
     val street = StringSlot("street")
     val number = IntSlot("number")
@@ -20,13 +19,16 @@ class FrontletSpec extends FunSpec with MustMatchers{
     val hobbies = StringListSlot("hobbies")
   }
 
-  class ImmutablePerson extends ImmutableFrontlet[ImmutablePerson] {
-    def construct() = new ImmutablePerson
+  class ImmutablePerson extends OuterFrontlet[ImmutablePerson] {
     val age = IntSlot("age")
     val address = FrontletSlot("address", () => new Address)
     val hobbies = StringListSlot("hobbies")
   }
+}
 
+class FrontletSpec extends FunSpec with MustMatchers{
+
+  import FrontletSpec._
 
   describe("A Mutable Frontlet") {
     it("should store primitive values") {
@@ -57,7 +59,6 @@ class FrontletSpec extends FunSpec with MustMatchers{
       val changed = person.age := 36
       person.age() must be (18)
       changed.age() must be (36)
-
     }
   }
 
