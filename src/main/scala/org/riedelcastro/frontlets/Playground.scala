@@ -1,7 +1,7 @@
 package org.riedelcastro.frontlets
 
-import collection.mutable
-import scala.collection
+import java.io.{InputStreamReader, BufferedReader}
+
 
 /**
  * @author riedelcastro
@@ -46,6 +46,33 @@ object Playground {
     outer.inner.create()
     outer.create()
 
+    try {
+      import collection.JavaConversions._
+      for ((key,value) <- System.getenv()) {
+        println("%30s %s".format(key,value))
+      }
+      val p = Runtime.getRuntime.exec("mongod")
+      val stdInput = new BufferedReader(new
+          InputStreamReader(p.getInputStream()))
+
+      val stdError = new BufferedReader(new
+          InputStreamReader(p.getErrorStream()))
+      println("Here is the standard output of the command:\n")
+
+      var s:String = null
+      while ({s = stdInput.readLine();s} != null) {
+        println(s)
+      }
+
+      // read any errors from the attempted command
+      println("Here is the standard error of the command (if any):\n")
+      while ({s = stdError.readLine();s} != null) {
+        println(s)
+      }
+
+    } catch {
+      case e: Throwable => e.printStackTrace()
+    }
 
   }
 

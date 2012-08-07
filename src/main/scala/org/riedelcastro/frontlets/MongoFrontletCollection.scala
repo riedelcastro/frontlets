@@ -661,7 +661,7 @@ class LazyMongoInverter(val frontlets: PartialFunction[Manifest[AbstractFrontlet
                         val cache: GenericMap[Any, AbstractFrontlet] = Map.empty)
   extends (AbstractFrontlet#InverseSlot[AbstractFrontlet] => Iterable[AbstractFrontlet]) {
   def apply(slot: AbstractFrontlet#InverseSlot[AbstractFrontlet]) = {
-    val typed = slot.asInstanceOf[AbstractFrontlet#InverseSlot[AbstractFrontlet]]
+    val typed = slot
     val found = for (coll <- frontlets.lift(slot.manifest)) yield {
       val raw = coll.findBySlot(c => slot.slot(c).asInstanceOf[AbstractFrontlet#RefSlot[AbstractFrontlet]], Seq(typed.frontlet.id))
       raw.map(c => cache.getOrElse(c.id, c)).toSeq

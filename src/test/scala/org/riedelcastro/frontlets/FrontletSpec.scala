@@ -17,6 +17,7 @@ object FrontletSpec {
     val age = IntSlot("age")
     val address = FrontletSlot("address", () => new Address)
     val hobbies = StringListSlot("hobbies")
+    val firstName = StringSlot("firstName")
   }
 
   class ImmutablePerson extends OuterFrontlet[ImmutablePerson] {
