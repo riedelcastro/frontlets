@@ -50,12 +50,24 @@ class MongoFrontletConverterSpec extends FunSpec with MustMatchers with MockitoS
   import collection.JavaConversions._
 
   describe("A MongoFrontletConverter") {
-    it ("should convert a dbo into an equivalent frontlet") {
+    it ("should convert a dbo into an equivalent frontlet, and back") {
       val addressDBO = new BasicDBObject(Map("street" -> "Broadway", "number" -> 1))
       val personDBO = new BasicDBObject(Map("age" -> 36, "address" -> addressDBO))
       val frontlet = MongoFrontletConverter.eagerFrontlet(personDBO, () => new Person)
       val expected = MongoFrontletConverter.toMongo(frontlet.asMap)
       personDBO must be (expected)
+    }
+    it ("should convery a dbo lazily to a frontlet") {
+      val addressDBO = mock[DBObject]
+      //need two parameters to fool faulty type checker
+      when(addressDBO.get("number")).thenReturn(new java.lang.Integer(2),new java.lang.Integer(2))
+      when(addressDBO.containsField("number")).thenReturn(true)
+
+      val frontlet = MongoFrontletConverter.lazyFrontlet(addressDBO, () => new Address)
+      verify(addressDBO,never()).get("number")
+      val number = frontlet.number()
+      verify(addressDBO,times(1))
+      number must be (2)
     }
   }
 }
