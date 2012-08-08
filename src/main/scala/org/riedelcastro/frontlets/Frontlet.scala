@@ -4,9 +4,9 @@ import collection.mutable
 import scala.collection
 
 /**
- * @author riedelcastro
  * The AbstractFrontlet abstracts over the type of underlying map structure used to store the data.
  * Most importantly, this enables both mutable and immutable frontlets (using immutable maps underneath).
+ * @author riedelcastro
  */
 trait AbstractFrontlet {
   thisFrontlet =>
@@ -424,7 +424,11 @@ trait AbstractFrontlet {
 
 }
 
-
+/**
+ * An immutable frontlet, backed by an immutable map. Any assignment of values creates a new
+ * frontlet copy.
+ * @tparam F self type, should be the implementing subclass.
+ */
 abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFrontlet {
   this: F =>
 
@@ -435,12 +439,12 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
 
   def construct(): F
 
-  def create(map:MapType) = {
+  def create(map: MapType) = {
     val f = construct()
     f.map = map
     f
   }
-  def create(map:GenericMap) = {
+  def create(map: GenericMap) = {
     val f = construct()
     f.map = Map.empty ++ map
     f
@@ -467,6 +471,9 @@ abstract class OuterFrontlet[F <: OuterFrontlet[F]] extends ImmutableFrontlet[F]
   def construct() = getClass.newInstance().asInstanceOf[F]
 }
 
+/**
+ * A mutable Frontlet backed by a mutable map.
+ */
 class Frontlet extends AbstractFrontlet {
   type MapType = mutable.Map[String, Any]
   private var map: MapType = new mutable.HashMap[String, Any]

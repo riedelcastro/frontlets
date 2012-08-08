@@ -41,5 +41,22 @@ class MongoFrontletCollectionSpec extends FunSpec with MustMatchers with Mockito
 
     }
   }
-
 }
+
+
+class MongoFrontletConverterSpec extends FunSpec with MustMatchers with MockitoSugar {
+
+  import FrontletSpec._
+  import collection.JavaConversions._
+
+  describe("A MongoFrontletConverter") {
+    it ("should convert a dbo into an equivalent frontlet") {
+      val addressDBO = new BasicDBObject(Map("street" -> "Broadway", "number" -> 1))
+      val personDBO = new BasicDBObject(Map("age" -> 36, "address" -> addressDBO))
+      val frontlet = MongoFrontletConverter.eagerFrontlet(personDBO, () => new Person)
+      val expected = MongoFrontletConverter.toMongo(frontlet.asMap)
+      personDBO must be (expected)
+    }
+  }
+}
+
