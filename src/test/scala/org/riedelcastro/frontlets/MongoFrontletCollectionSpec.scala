@@ -5,8 +5,6 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.mock.MockitoSugar
 import com.mongodb._
 import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.mockito.Matchers.{eq => e}
 
 /**
  * @author Sebastian Riedel
@@ -18,7 +16,7 @@ class MongoFrontletCollectionSpec extends FunSpec with MustMatchers with Mockito
   import MongoFrontletImplicits._
 
   describe("A MongoFrontletCollection") {
-    it("should translate frontlet insert into a correspondong mongo dbo insert") {
+    it("should translate frontlet insert into a corresponding mongo dbo insert") {
       val mockColl = mock[DBCollection]
       val coll = new MongoFrontletCollection(mockColl, () => new  Person)
       val person = new Person().age(36).address.create(_.street("Broadway").number(1))

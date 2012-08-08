@@ -435,7 +435,12 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
 
   def construct(): F
 
-  def create(map: GenericMap = Map.empty) = {
+  def create(map:MapType) = {
+    val f = construct()
+    f.map = map
+    f
+  }
+  def create(map:GenericMap) = {
     val f = construct()
     f.map = Map.empty ++ map
     f
