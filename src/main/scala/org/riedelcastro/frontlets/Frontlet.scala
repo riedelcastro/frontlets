@@ -24,6 +24,13 @@ trait AbstractFrontlet {
 
   def asMap: GenericMap
 
+  override def equals(that: Any) = that match {
+    case thatFrontlet:AbstractFrontlet => this.asMap == thatFrontlet.asMap
+    case _ => false
+  }
+
+  override def hashCode() = asMap.hashCode()
+
   override def toString = toJSON
 
   def toJSON = FrontletJacksonMapper.writeValueAsString(asMap)
@@ -265,13 +272,13 @@ trait AbstractFrontlet {
   case class DateSlot(override val name: String) extends PrimitiveSlot[java.util.Date](name)
 
   // TODO We need other primitive types supported in BSON
+
   /**
    * A slot containing a list of primitives.
    * @param name the name of the slot.
    * @tparam A the type of primitives the list contains.
    */
   abstract class PrimitiveListSlot[A](override val name: String) extends Slot[Seq[A]](name) {
-
 
     /**
      * Returns the Seq stored in the underlying map.
@@ -311,7 +318,7 @@ trait AbstractFrontlet {
      */
     def opt = get(name) match {
       case Some(s: Seq[_]) =>
-        val frontlets = s.map(m => constructor().setMap(m.asInstanceOf[collection.Map[String, Any]]))
+        val frontlets = s.view.map(m => constructor().setMap(m.asInstanceOf[collection.Map[String, Any]]))
         Some(frontlets.asInstanceOf[Seq[A]])
       case None => None
     }

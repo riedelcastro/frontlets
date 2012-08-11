@@ -13,11 +13,17 @@ object FrontletSpec {
     val number = IntSlot("number")
   }
 
+  class Job extends Frontlet {
+    val title = StringSlot("title")
+    val company = StringSlot("companies")
+  }
+
   class Person extends Frontlet {
     val age = IntSlot("age")
     val address = FrontletSlot("address", () => new Address)
     val hobbies = StringListSlot("hobbies")
     val firstName = StringSlot("firstName")
+    val experience = FrontletListSlot("experience",() => new Job)
   }
 
   class ImmutablePerson extends OuterFrontlet[ImmutablePerson] {
@@ -44,6 +50,21 @@ class FrontletSpec extends FunSpec with MustMatchers{
       person.address().number() must be (1)
       person.address().street() must be ("Broadway")
     }
+
+    it("should store primitive list values") {
+      val person = new Person()
+      person.hobbies := Seq("soccer","rap")
+      person.hobbies() must  be (Seq("soccer","rap"))
+    }
+
+    it("should strong fronlet list values") {
+      val person = new Person()
+      def job1 = new Job().title("researcher").company("UMass")
+      def job2 = new Job().title("lecturer").company("UCL")
+      person.experience := Seq(job1,job2)
+      person.experience() must be (Seq(job1,job2))
+    }
+
 
     it("should load and write json strings") {
       val person1 = new Person().age(36).address.create(_.number(1).street("Broadway")).hobbies(Seq("ping-pong"))
