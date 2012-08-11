@@ -1,7 +1,7 @@
 This version includes a substantial refactoring that introduces an frontlet class that abstracts over the
 type of underlying map used. In particular, the underlying map may be immutable. In this case the modification operations
 on slots return modified *copies* of the original frontlet. By contrast, with mutable maps the return type of
-modification operations is ```frontlet.type```, and the returned object is the frontlet itself.
+modification operations is ``frontlet.type``, and the returned object is the frontlet itself.
 
 Immutable frontlets in action:
 
