@@ -1,9 +1,5 @@
 package org.riedelcastro.frontlets
 
-import java.io.{InputStreamReader, BufferedReader}
-import org.riedelcastro.nurupo.Timer
-
-
 /**
  * @author riedelcastro
  */
@@ -46,8 +42,6 @@ object Playground {
     val outer = new Outer
     outer.inner.create()
     outer.create()
-
-    val timer = new Timer
 
   }
 
