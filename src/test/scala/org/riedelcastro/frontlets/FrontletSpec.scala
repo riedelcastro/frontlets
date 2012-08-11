@@ -57,12 +57,29 @@ class FrontletSpec extends FunSpec with MustMatchers{
       person.hobbies() must  be (Seq("soccer","rap"))
     }
 
-    it("should strong fronlet list values") {
+    it("should store fronlet list values") {
       val person = new Person()
       def job1 = new Job().title("researcher").company("UMass")
       def job2 = new Job().title("lecturer").company("UCL")
       person.experience := Seq(job1,job2)
       person.experience() must be (Seq(job1,job2))
+    }
+
+    it("should access frontlets in a sequence using a position-based constructor") {
+      class Item extends Frontlet {
+        val index = IntSlot("index")
+        val container = FrontletSlot("container",() => new Container)
+      }
+      class Container extends Frontlet {
+        val items = FrontletSeqSlot("items", i => new Item().index(i).container(this))
+      }
+
+      val container = new Container().items(Seq(new Item,new Item))
+      val items = container.items()
+      for ((item,index) <- items.zipWithIndex) {
+        item.index() must be (index)
+        item.container() must be (container)
+      }
     }
 
 
@@ -83,6 +100,8 @@ class FrontletSpec extends FunSpec with MustMatchers{
       changed.age() must be (36)
     }
   }
+
+
 
 
 

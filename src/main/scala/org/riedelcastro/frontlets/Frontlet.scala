@@ -22,6 +22,8 @@ trait AbstractFrontlet {
 
   def setMap(map: GenericMap): FrontletType
 
+  def addMap(map: GenericMap): FrontletType
+
   def asMap: GenericMap
 
   override def equals(that: Any) = that match {
@@ -299,6 +301,23 @@ trait AbstractFrontlet {
 
   case class StringListSlot(override val name: String) extends PrimitiveListSlot[String](name)
 
+  case class FrontletSeqSlot[A <: AbstractFrontlet](override val name:String, construct:Int => A)
+    extends Slot[Seq[A]](name) {
+
+    def opt = get(name) match {
+      case Some(s: Seq[_]) =>
+        val frontlets = for (i <- s.indices; m = s(i)) yield
+          construct(i).addMap(m.asInstanceOf[collection.Map[String, Any]])
+        Some(frontlets.asInstanceOf[Seq[A]])
+      case None => None
+    }
+
+    def :=(value: Seq[A]) = {
+      assign(name, value.map(_.asMap))
+    }
+
+  }
+
   /**
    * A slot that contains a list of frontlets.
    * @param name the name of the slot.
@@ -469,6 +488,9 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
     create(map)
   }
 
+  def addMap(map: GenericMap) = {
+    create(this.map ++ map)
+  }
   def self: FrontletType = this
 
 }
@@ -501,6 +523,12 @@ class Frontlet extends AbstractFrontlet {
         this.map ++= map
       }
     }
+    this
+  }
+
+
+  def addMap(map: GenericMap) = {
+    this.map ++= map
     this
   }
 

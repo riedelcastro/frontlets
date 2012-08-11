@@ -53,7 +53,7 @@ Generic map-based data access can certainly be too slow for certain use cases, s
 loops. In such cases you want to convert frontlets into a more efficient representation. However, notice that data
 is often read and then only used once or twice (say, to render on a webpage). In such cases frontlets
 have very minimal overhead, as you would generally need to call the underlying, say, mongo map data structure
-at least once.
+at least once anyway.
 
 ### JSON import and export ###
 
