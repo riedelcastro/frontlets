@@ -27,7 +27,7 @@ trait AbstractFrontlet {
   def asMap: GenericMap
 
   override def equals(that: Any) = that match {
-    case thatFrontlet:AbstractFrontlet => this.asMap == thatFrontlet.asMap
+    case thatFrontlet: AbstractFrontlet => this.asMap == thatFrontlet.asMap
     case _ => false
   }
 
@@ -301,7 +301,7 @@ trait AbstractFrontlet {
 
   case class StringListSlot(override val name: String) extends PrimitiveListSlot[String](name)
 
-  case class FrontletSeqSlot[A <: AbstractFrontlet](override val name:String, construct:Int => A)
+  case class FrontletSeqSlot[A <: AbstractFrontlet](override val name: String, construct: Int => A)
     extends Slot[Seq[A]](name) {
 
     def opt = get(name) match {
@@ -438,12 +438,19 @@ trait AbstractFrontlet {
      * Creates a frontlet of this slot's frontlet type, apply the given function to it, and set the slot
      * to be the result of that application.
      * @param f the function to apply to the created frontlet
-     * @return the slot's frontlet.
+     * @return the modified frontlet.
      */
-    def create(f: A => A = identity(_)): thisFrontlet.type = {
-      val frontlet = constructor()
-      this := f(frontlet)
-      thisFrontlet
+    def create(f: A => A = identity(_)): FrontletType = {
+      this := f(constructor())
+    }
+    /**
+     * Changes the content of this slot by applying the given function to its current value.
+     * If no value is assigned to the slot before, a new value is constructed.
+     * @param f the function to apply to the slot value
+     * @return the modified frontlet.
+     */
+    def apply(f: A => A): FrontletType = {
+      this := f(opt.getOrElse(constructor()))
     }
 
   }

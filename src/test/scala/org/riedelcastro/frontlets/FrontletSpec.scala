@@ -84,8 +84,9 @@ class FrontletSpec extends FunSpec with MustMatchers{
 
 
     it("should load and write json strings") {
-      val person1 = new Person().age(36).address.create(_.number(1).street("Broadway")).hobbies(Seq("ping-pong"))
+      val person1 = new Person().age(36).address(_.number(1).street("Broadway")).hobbies(Seq("ping-pong"))
       val json1 = person1.toJSON
+      json1 must be ("""{"hobbies":["ping-pong"],"age":36,"address":{"street":"Broadway","number":1}}""")
       val person2 = new Person().setJSON(json1)
       val json2 = person2.toJSON
       json1 must be (json2)
