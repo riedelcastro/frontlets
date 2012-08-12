@@ -30,6 +30,8 @@ All slot values are stored in, and retrieved from, an underlying mutable scala m
 This map can come from anywhere: json results of a web-service, bson query results of a mongo database etc. In these
 cases frontlets give clients typed and concise access to the underlying raw map.
 
+A good place for further information is the [spec][spec].
+
 ### Mongo Support ###
 
 Frontlets particularly shine in combination with document-based nosql databases such as mongodb. You can
@@ -125,3 +127,4 @@ License
 -------
 Frontlets are licensed under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
 
+[spec]: https://github.com/riedelcastro/frontlets/blob/master/src/test/scala/org/riedelcastro/frontlets/FrontletSpec.scala
