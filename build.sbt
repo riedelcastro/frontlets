@@ -26,7 +26,8 @@ libraryDependencies ++= Seq(
      "org.mongodb" % "mongo-java-driver" % "2.8.0",
      "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT",
      "org.scalatest" %% "scalatest" % "1.8" % "test",
-     "org.mockito" % "mockito-all" % "1.9.0" % "test"
+     "org.mockito" % "mockito-all" % "1.9.0" % "test",
+     "org.apache.bcel" % "bcel" % "5.2"
 )
 
 publishTo <<= (version) { version: String =>
