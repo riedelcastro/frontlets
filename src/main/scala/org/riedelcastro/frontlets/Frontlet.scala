@@ -46,7 +46,6 @@ trait AbstractFrontlet {
     setMap(FrontletJacksonMapper.readValue[mutable.Map[String, Any]](json))
   }
 
-
   final def id = Id()
 
   /**

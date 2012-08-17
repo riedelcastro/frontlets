@@ -7,13 +7,57 @@ import java.net.URL
 import scala.collection
 import scala.collection
 import scala.collection.immutable.HashMap
+import org.riedelcastro.frontlets.{Frontlet, AbstractFrontlet}
 
 /**
  * @author riedelcastro
  */
+sealed trait Term[+T] {
+}
+case class Binding[+T](variable: Var[T], value: T)
+trait Var[+T] extends Term[T] {
+  def name:String
+}
+case class FrontletVar[F<:AbstractFrontlet](name:String, constructor: () => F) extends FrontletTerm[F] with Var[F]
+trait FrontletTerm[F<:AbstractFrontlet] extends Term[F] {
+  def apply[T](slot:F=>F#Slot[T]) = Get(this,slot)
+  def apply[T](slot:F=>F#Slot[T], value:Term[T]) = Set(this,slot,value)
+}
+trait IntTerm extends Term[Int] {
+  def +(that:Term[Int]) =  IntSum(Seq(this,that))
+}
+case class IntSum(args:Seq[Term[Int]]) extends IntTerm
+case class ProxyTerm[+T](self:Term[T]) extends Term[T]
+case class Assignment[+T](variable: Var[T], term: Term[T])
+case class Program(assignments: Seq[Assignment[_]])
+case class Const[+T](value: T) extends Term[T]
+case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]) extends Term[T]
+case class Set[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T], value:Term[T]) extends FrontletTerm[F]
+
+class Person extends Frontlet {
+  val age = IntSlot("age")
+  val spouse = FrontletSlot("spouse", () => new Person)
+}
+
+object Example {
+  def main(args: Array[String]) {
+
+    implicit def toFrontletTerm[F <: AbstractFrontlet](term:Term[F]) = new ProxyTerm(term) with FrontletTerm[F]
+    implicit def termToIntTerm(term:Term[Int]) = new ProxyTerm(term) with IntTerm
+    implicit def valueToTerm[T](value:T) = Const(value)
+    implicit def toAssignmentBuilder[T](v:Var[T]) = new AnyRef {
+      def :=(that:Term[T]) = Assignment(v,that)
+    }
+
+    val p = FrontletVar("p", () => new Person)
+    val silly = p(_.age,p(_.spouse)(_.age))
+    val sum = p(_.age) + p(_.age) + 5
+    p := p(_.spouse)
+  }
+}
+
 object FrontletCompiler {
 
-  import org.riedelcastro.frontlets.Playground.Person
   import Constants._
 
   class ByteArrayClassLoader(val bytes: Map[String, Array[Byte]], urls: Seq[URL] = Seq.empty, parent: ClassLoader)
