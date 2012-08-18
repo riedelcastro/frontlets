@@ -6,9 +6,7 @@ import tools.nsc.util.ScalaClassLoader.URLClassLoader
 import java.net.URL
 import scala.collection
 import collection.mutable
-import collection.mutable.ArrayBuffer
 import org.riedelcastro.frontlets.{Frontlet, AbstractFrontlet}
-import annotation.tailrec
 
 /**
  * @author riedelcastro
@@ -26,6 +24,8 @@ object State {
 sealed trait Term[+T] {
   def eval(state: State): Option[T]
 
+  def prototype:T
+
   def children: Seq[Term[Any]] = Seq.empty
 
   def all: Seq[Term[Any]] = this +: children.flatMap(_.all)
@@ -40,9 +40,13 @@ trait Var[+T] extends Term[T] {
   def eval(state: State) = state.get(this)
 }
 
-case class FrontletVar[F <: AbstractFrontlet](name: String, constructor: () => F) extends FrontletTerm[F] with Var[F]
+case class FrontletVar[F <: AbstractFrontlet](name: String, constructor: () => F) extends FrontletTerm[F] with Var[F] {
+  def prototype = constructor()
+}
 
-case class SimpleVar[+T](name: String) extends Var[T]
+case class SimpleVar[+T](name: String, default: T) extends Var[T] {
+  def prototype = default
+}
 
 trait FrontletTerm[F <: AbstractFrontlet] extends Term[F] {
   def apply[T](slot: F => F#Slot[T]) = Get(this, slot)
@@ -58,10 +62,14 @@ case class IntSum(args: Seq[Term[Int]]) extends IntTerm {
   def eval(state: State) = Util.allOrNone(args.map(_.eval(state))).map(_.sum)
 
   override def children = args
+
+  def prototype = 0
 }
 
 case class ProxyTerm[+T](self: Term[T]) extends Term[T] with Proxy {
   def eval(state: State) = self.eval(state)
+
+  def prototype = self.prototype
 }
 
 case class Assignment[+T](variable: Var[T], term: Term[T]) extends Command
@@ -72,12 +80,15 @@ case class Program(commands: Seq[Command])
 
 case class Const[+T](value: T) extends Term[T] {
   def eval(state: State) = Some(value)
+  def prototype = value
 }
 
 case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]) extends Term[T] {
   def eval(state: State) = frontlet.eval(state).map(slot(_).value)
 
   override def children = Seq(frontlet)
+
+  def prototype = slot(frontlet.prototype).default
 }
 
 case class Set[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T], value: Term[T])
@@ -86,6 +97,7 @@ case class Set[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]
 
   override def children = Seq(frontlet, value)
 
+  def prototype = slot(frontlet.prototype).setToDefault()
 }
 
 object Util {
@@ -133,6 +145,18 @@ object Compiler {
 
   import Constants._
 
+  case class AccessPrototype(v:Var[AbstractFrontlet],proto:AbstractFrontlet) {
+    def +(that:AccessPrototype) = copy(proto = proto += that.proto)
+  }
+
+  def accessPrototype(term:Term[Any]):Option[AccessPrototype] = {
+    term match {
+      case Get(f,s) => for (a <- accessPrototype(f)) yield a.copy(proto = s(a.proto).setToDefault())
+      case v@FrontletVar(name,constructor) => Some(AccessPrototype(v,constructor()))
+      case _ => None
+    }
+  }
+
   class ByteArrayClassLoader(val bytes: Map[String, Array[Byte]], urls: Seq[URL] = Seq.empty, parent: ClassLoader)
     extends URLClassLoader(urls, parent) {
     override def findClass(name: String) = {
@@ -140,15 +164,11 @@ object Compiler {
     }
   }
 
-  def prototype[F<:AbstractFrontlet](term:Term[F]) = {
-//    term match {
-//      case Set(frontlet,slot,value) =>
-//
-//    }
-    null
-  }
-
   def compile(program: Program) {
+
+    //get all terms
+    val terms = program.commands.collect({case Assignment(_,term) => term})
+    val allTerms = terms.flatMap(_.all)
 
     //get free and bound variables
     val bound = new mutable.HashSet[Var[Any]]
@@ -168,19 +188,19 @@ object Compiler {
     println(bound)
     println(free)
 
-    def accessPrototypes(term:Term[Any]):Map[Var[AbstractFrontlet],AbstractFrontlet] = {
-      term match {
-        case Get(f,s) =>
-        case _ =>
-      }
-      null
+    //get all access prototypes
+    val accessPrototypes = allTerms.flatMap(accessPrototype(_))
+    val var2accessPrototype = accessPrototypes.groupBy(_.v).mapValues(_.reduce(_ + _))
+    println(var2accessPrototype)
+
+    println("Prototypes: ")
+    for (term <- allTerms){
+      println("%-30s %s".format(term,term.prototype))
     }
+    println("****")
+
 
     //for each frontlet variable get a requirement prototype (based on getters)
-    for (command <- program.commands) command match {
-      case Assignment(_, term) =>
-
-    }
 
     //for each frontlet term get a prototype
 
@@ -197,8 +217,8 @@ object Compiler {
   def main(args: Array[String]) {
 
     import TermImplicits._
-    val x = SimpleVar[Int]("x")
-    val y = SimpleVar[Int]("y")
+    val x = SimpleVar("x",0)
+    val y = SimpleVar("y",0)
     val z = FrontletVar("z", () => new Person)
     val u = FrontletVar("u", () => new Person)
     def Person = Const(new Person)
@@ -207,6 +227,11 @@ object Compiler {
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
     compile(program)
+
+    for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
+      println("%-20s %s".format(term,accessPrototype(term)))
+    }
+
 
     val person = new Person().age(36)
     val cg = new ClassGen("Person", "java.lang.Object", "<generated>", ACC_PUBLIC | ACC_SUPER, null)
@@ -248,7 +273,7 @@ class SimpleExecutable extends Executable {
 
   def execute(input: State) = {
     val map = new collection.mutable.HashMap[Var[Any], Any]
-    map(SimpleVar[Int]("age")) = age
+    map(SimpleVar("age",0)) = age
     State(map)
   }
 }

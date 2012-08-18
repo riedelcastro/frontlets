@@ -24,7 +24,7 @@ trait AbstractFrontlet {
 
   def addMap(map: GenericMap): FrontletType
 
-  def +=(that:FrontletType):FrontletType = addMap(that.asMap)
+  def +=(that:AbstractFrontlet):FrontletType = addMap(that.asMap)
 
   def asMap: GenericMap
 
@@ -251,6 +251,11 @@ trait AbstractFrontlet {
       this := value
     }
 
+    /**
+     * Sets the slot to the slots default value
+     * @return the frontlet of this slot
+     */
+    def setToDefault() = this := default
 
     override def toString = name + ":" + get(name)
   }
