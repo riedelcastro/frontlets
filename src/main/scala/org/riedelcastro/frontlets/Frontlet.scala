@@ -24,6 +24,8 @@ trait AbstractFrontlet {
 
   def addMap(map: GenericMap): FrontletType
 
+  def +=(that:FrontletType):FrontletType = addMap(that.asMap)
+
   def asMap: GenericMap
 
   override def equals(that: Any) = that match {
@@ -93,6 +95,12 @@ trait AbstractFrontlet {
      */
     def frontlet: thisFrontlet.type = thisFrontlet
 
+    /**
+     * Creates a default value for this slot
+     * @return default value for this slot
+     */
+    def default:T
+
   }
 
   /**
@@ -105,6 +113,8 @@ trait AbstractFrontlet {
     def :=(value: Any) = assign(name, value)
 
     def opt = get(name)
+
+    def default = 0
   }
 
   //  val idSlot = new IdSlot
@@ -262,17 +272,25 @@ trait AbstractFrontlet {
   }
 
   //case class AnySlot(override val name:String) extends PrimitiveSlot[Any](name) // Too dangerous?
-  case class IntSlot(override val name: String) extends PrimitiveSlot[Int](name)
+  case class IntSlot(override val name: String) extends PrimitiveSlot[Int](name) {
+    def default = 0
+  }
 
-  case class BooleanSlot(override val name: String) extends PrimitiveSlot[Boolean](name)
+  case class BooleanSlot(override val name: String) extends PrimitiveSlot[Boolean](name) {
+    def default = false
+  }
 
-  case class DoubleSlot(override val name: String) extends PrimitiveSlot[Double](name)
+  case class DoubleSlot(override val name: String) extends PrimitiveSlot[Double](name)  {
+    def default = 0.0
+  }
 
-  case class StringSlot(override val name: String) extends PrimitiveSlot[String](name)
+  case class StringSlot(override val name: String) extends PrimitiveSlot[String](name) {
+    def default = ""
+  }
 
-  case class DateSlot(override val name: String) extends PrimitiveSlot[java.util.Date](name)
-
-  // TODO We need other primitive types supported in BSON
+  case class DateSlot(override val name: String) extends PrimitiveSlot[java.util.Date](name) {
+    def default = new java.util.Date
+  }
 
   /**
    * A slot containing a list of primitives.
@@ -290,15 +308,25 @@ trait AbstractFrontlet {
 
     def :=(value: Seq[A]) = assign(name, value)
 
+
+
   }
 
-  case class IntListSlot(override val name: String) extends PrimitiveListSlot[Int](name)
+  case class IntListSlot(override val name: String) extends PrimitiveListSlot[Int](name) {
+    def default = Seq(0)
+  }
 
-  case class BooleanListSlot(override val name: String) extends PrimitiveListSlot[Boolean](name)
+  case class BooleanListSlot(override val name: String) extends PrimitiveListSlot[Boolean](name) {
+    def default = Seq(false)
+  }
 
-  case class DoubleListSlot(override val name: String) extends PrimitiveListSlot[Double](name)
+  case class DoubleListSlot(override val name: String) extends PrimitiveListSlot[Double](name) {
+    def default = Seq(0.0)
+  }
 
-  case class StringListSlot(override val name: String) extends PrimitiveListSlot[String](name)
+  case class StringListSlot(override val name: String) extends PrimitiveListSlot[String](name) {
+    def default = Seq("")
+  }
 
   case class FrontletSeqSlot[A <: AbstractFrontlet](override val name: String, construct: Int => A)
     extends Slot[Seq[A]](name) {
@@ -315,6 +343,7 @@ trait AbstractFrontlet {
       assign(name, value.map(_.asMap))
     }
 
+    def default = Seq(construct(0))
   }
 
   /**
@@ -349,6 +378,9 @@ trait AbstractFrontlet {
     def :=(value: Seq[A]) = {
       assign(name, value.map(_.asMap))
     }
+
+    def default = Seq(constructor())
+
   }
 
 
@@ -387,6 +419,8 @@ trait AbstractFrontlet {
     def ::=(value: A) = {
       assign(name, value.Id())
     }
+
+    def default = 0
   }
 
   /**
@@ -452,6 +486,8 @@ trait AbstractFrontlet {
       this := f(opt.getOrElse(constructor()))
     }
 
+    def default = constructor()
+
   }
 
 }
@@ -470,6 +506,8 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
   private var map: MapType = Map.empty
 
   def construct(): F
+
+  def +(that:FrontletType) = this += that
 
   def create(map: MapType) = {
     val f = construct()
