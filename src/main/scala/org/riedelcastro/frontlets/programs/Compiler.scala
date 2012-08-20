@@ -16,7 +16,7 @@ trait State {
 }
 
 object State {
-  def apply(map: collection.Map[Var[Any], Any]) = new State {
+  def apply(map: collection.Map[Var[Any], Any]): State = new State {
     def get[T](variable: Var[T]) = map.get(variable).map(_.asInstanceOf[T])
   }
 }
@@ -154,6 +154,18 @@ object Compiler {
 
   import Constants._
 
+  //helpers
+  val N_CLASS = "SomeName"
+  val N_HASHMAP = classOf[scala.collection.mutable.HashMap[Any, Any]].getName
+  val N_MAP = classOf[scala.collection.Map[Any, Any]].getName
+  val N_EXE = classOf[Executable].getName
+  val N_STATE_OBJ = State.getClass.getName
+
+  val T_STATE = new ObjectType(classOf[State].getName)
+  val T_STATE_OBJ = new ObjectType(N_STATE_OBJ)
+  val T_MAP = new ObjectType(N_MAP)
+
+
   case class AccessPrototype(v: Var[AbstractFrontlet], proto: AbstractFrontlet) {
     def +(that: AccessPrototype) = copy(proto = proto += that.proto)
   }
@@ -208,10 +220,6 @@ object Compiler {
     }
     println("****")
 
-    //helpers
-    val N_CLASS = "SomeName"
-    val T_STATE = new ObjectType(classOf[State].getName)
-    val N_EXE = classOf[Executable].getName
 
     //build the actual executable
     val cg = new ClassGen(N_CLASS, "java.lang.Object", "<generated>", ACC_PUBLIC | ACC_SUPER, Array(N_EXE))
@@ -220,23 +228,40 @@ object Compiler {
     val il = new InstructionList()
     val f = new InstructionFactory(cg)
     val mg = new MethodGen(ACC_PUBLIC, T_STATE, Array[Type](T_STATE), Array("input"), "execute", N_CLASS, il, cp)
-    il.append(new ACONST_NULL)
-    il.append(f.createCast(Type.NULL,T_STATE))
+
+    //create an empty hashmap
+    appendCreateEmptyHashMap(il, f)
+    il.append(new ASTORE(2))
+
+    //create the return state
+    il.append(f.createGetStatic(N_STATE_OBJ, "MODULE$", T_STATE_OBJ))
+    il.append(new ALOAD(2))
+    il.append(f.createInvoke(N_STATE_OBJ, "apply", T_STATE, Array(T_MAP), INVOKEVIRTUAL))
+
+    //create return
     il.append(new ARETURN)
+
+    //done
     mg.setMaxStack()
+    mg.setMaxLocals()
     cg.addMethod(mg.getMethod)
 
     cg.addEmptyConstructor(ACC_PUBLIC)
 
     val c = cg.getJavaClass
 
+    println(cg)
+    for (method <- cg.getMethods) {
+      println(method)
+      println(method.getCode.toString)
+    }
+    c.dump("/tmp/Generated.class")
+
 
     val loader = new ByteArrayClassLoader(Map(N_CLASS -> c.getBytes), Seq.empty, this.getClass.getClassLoader)
     val exeClass = loader.findClass(N_CLASS)
     val exe = exeClass.getConstructor().newInstance().asInstanceOf[Executable]
     exe
-
-
 
     //for each frontlet variable get a requirement prototype (based on getters)
 
@@ -252,6 +277,12 @@ object Compiler {
   }
 
 
+  def appendCreateEmptyHashMap(il: InstructionList, f: InstructionFactory) {
+    il.append(f.createNew(N_HASHMAP))
+    il.append(new DUP)
+    il.append(f.createInvoke(N_HASHMAP, "<init>", Type.VOID, Array.empty, INVOKESPECIAL))
+  }
+
   def main(args: Array[String]) {
 
     import TermImplicits._
@@ -265,7 +296,6 @@ object Compiler {
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
     val exe = compile(program)
-
     println("Result: " + exe.execute(State(Map.empty)))
 
     for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
