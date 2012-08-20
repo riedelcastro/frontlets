@@ -67,6 +67,8 @@ trait IntTerm extends Term[Int] {
 }
 
 case class IntSum(args: Seq[Term[Int]]) extends IntTerm {
+  require(args.size > 1)
+
   def eval(state: State, eval: Eval) = Util.allOrNone(args.map(eval(_, state))).map(_.sum)
 
   override def children = args
@@ -150,6 +152,12 @@ object Example {
   }
 }
 
+class ProgramInfo(val boundVariables: Array[Var[Any]],
+                  val freeVariables: Array[Var[Any]],
+                  val objectConstants: Array[AnyRef]) {
+
+}
+
 object Compiler {
 
   import Constants._
@@ -157,14 +165,24 @@ object Compiler {
   //helpers
   val N_CLASS = "SomeName"
   val N_HASHMAP = classOf[scala.collection.mutable.HashMap[Any, Any]].getName
+  val N_MMAP = classOf[scala.collection.mutable.Map[Any, Any]].getName
   val N_MAP = classOf[scala.collection.Map[Any, Any]].getName
   val N_EXE = classOf[Executable].getName
   val N_STATE_OBJ = State.getClass.getName
+  val N_INFO_FIELD = "info"
+  val N_PROGRAM_INFO = classOf[ProgramInfo].getName
+  val N_VAR = classOf[Var[Any]].getName
+  val N_BOUND_VARIABLES = "boundVariables"
+  val N_FREE_VARIABLES = "freeVariables"
+  val N_INTEGER = classOf[java.lang.Integer].getName
+
 
   val T_STATE = new ObjectType(classOf[State].getName)
+  val T_PROGRAM_INFO = new ObjectType(N_PROGRAM_INFO)
   val T_STATE_OBJ = new ObjectType(N_STATE_OBJ)
   val T_MAP = new ObjectType(N_MAP)
-
+  val T_VAR = new ObjectType(N_VAR)
+  val T_INTEGER = new ObjectType(N_INTEGER)
 
   case class AccessPrototype(v: Var[AbstractFrontlet], proto: AbstractFrontlet) {
     def +(that: AccessPrototype) = copy(proto = proto += that.proto)
@@ -185,11 +203,32 @@ object Compiler {
     }
   }
 
+  def appendInfoConstructor(cg: ClassGen, cp: ConstantPoolGen) {
+    val il = new InstructionList()
+    val f = new InstructionFactory(cg)
+    val mg = new MethodGen(ACC_PUBLIC, Type.VOID, Array[Type](T_PROGRAM_INFO), Array("info"), "<init>", N_CLASS, il, cp)
+    il.append(new ALOAD(0))
+    il.append(f.createInvoke("java.lang.Object", "<init>", Type.VOID, Array.empty, INVOKESPECIAL))
+    il.append(new ALOAD(0))
+    il.append(new ALOAD(1))
+    il.append(f.createPutField(N_CLASS, N_INFO_FIELD, T_PROGRAM_INFO))
+    il.append(new RETURN)
+    mg.setMaxLocals()
+    mg.setMaxStack()
+    cg.addMethod(mg.getMethod)
+
+  }
+
+  def appendThis(il: InstructionList) {
+    il.append(new ALOAD(0))
+  }
+
   def compile(program: Program): Executable = {
 
     //get all terms
     val terms = program.commands.collect({ case Assignment(_, term) => term })
     val allTerms = terms.flatMap(_.all)
+    //    val allObjectConstants = allTerms.collect({case Const(value) =>  })
 
     //get free and bound variables
     val bound = new mutable.HashSet[Var[Any]]
@@ -209,6 +248,18 @@ object Compiler {
     println(bound)
     println(free)
 
+    //info used in the executable
+    val programInfo = new ProgramInfo(bound.toArray, free.toArray, Array.empty)
+    val bound2InfoIndex = programInfo.boundVariables.zipWithIndex.toMap
+    val free2InfoIndex = programInfo.freeVariables.zipWithIndex.toMap
+
+    def appendVariable(il: InstructionList, f: InstructionFactory, variable: Var[Any], method: String, index: Int) {
+      appendGetProgramInfo(il, f)
+      il.append(f.createInvoke(N_PROGRAM_INFO, method, new ArrayType(T_VAR, 1), Array.empty, INVOKEVIRTUAL))
+      il.append(new ICONST(index))
+      il.append(new AALOAD)
+    }
+
     //get all access prototypes
     val accessPrototypes = allTerms.flatMap(accessPrototype(_))
     val var2accessPrototype = accessPrototypes.groupBy(_.v).mapValues(_.reduce(_ + _))
@@ -224,18 +275,86 @@ object Compiler {
     //build the actual executable
     val cg = new ClassGen(N_CLASS, "java.lang.Object", "<generated>", ACC_PUBLIC | ACC_SUPER, Array(N_EXE))
     val cp = cg.getConstantPool
+    val infoField = new FieldGen(ACC_PUBLIC | ACC_FINAL, T_PROGRAM_INFO, N_INFO_FIELD, cp).getField
+    cg.addField(infoField)
 
     val il = new InstructionList()
     val f = new InstructionFactory(cg)
     val mg = new MethodGen(ACC_PUBLIC, T_STATE, Array[Type](T_STATE), Array("input"), "execute", N_CLASS, il, cp)
 
+    var currentLocalVarIndex = 2
+    def allocateLocalVariableIndex() = {
+      val old = currentLocalVarIndex
+      currentLocalVarIndex += 1
+      old
+    }
+
     //create an empty hashmap
+    val resultMapLocalIndex = allocateLocalVariableIndex()
     appendCreateEmptyHashMap(il, f)
-    il.append(new ASTORE(2))
+    il.append(new ASTORE(resultMapLocalIndex))
+
+    def appendLoadResultMap(il: InstructionList) {
+      il.append(new ALOAD(resultMapLocalIndex))
+    }
+
+    //remember variable to local index mapping
+    val var2LocalIndex = new mutable.HashMap[Var[Any], Int]
+
+    def appendCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
+      term match {
+        case Const(value) => value match {
+          case i: Int => il.append(new ICONST(i))
+          case _ => il.append(new ACONST_NULL)
+        }
+        case IntSum(args) =>
+          for (arg <- args) appendCompiledTerm(arg, il, f)
+          //sum terms
+          for (_ <- 0 until (args.size - 1)) il.append(new IADD)
+        case _ =>
+          term.prototype match {
+            case i: Int =>
+              il.append(new ICONST(i))
+            case o =>
+              il.append(new ACONST_NULL)
+              il.append(f.createCast(Type.NULL, new ObjectType(o.getClass.getName)))
+          }
+      }
+    }
+
+    for (command <- program.commands) command match {
+      case Assignment(variable, term) =>
+        //default action: evaluate term by evaluating subterms, then create Eval object, and then call term.eval on it
+        //this requires created the current input state (arguments plus local)
+        //get the map to call update on
+        appendLoadResultMap(il)
+        appendVariable(il, f, variable, N_BOUND_VARIABLES, bound2InfoIndex(variable))
+        //need to append a reference to the variable
+        appendCompiledTerm(term, il, f)
+        il.append(new DUP)
+        //duplicate to store both in local variable and in result map
+
+        //this stores the result in the local variable for later use
+        val localVarIndex = var2LocalIndex.getOrElseUpdate(variable, allocateLocalVariableIndex())
+        variable.prototype match {
+          case i: Int =>
+            //store result in local variable
+            il.append(new ISTORE(localVarIndex))
+            //store result in map
+            appendBoxInt(il, f)
+            appendUpdateMap(il, f)
+          case _ =>
+            il.append(new ASTORE(localVarIndex))
+            appendUpdateMap(il, f)
+        }
+
+      //this stores the result in the map
+      //il.append()
+    }
 
     //create the return state
     il.append(f.createGetStatic(N_STATE_OBJ, "MODULE$", T_STATE_OBJ))
-    il.append(new ALOAD(2))
+    appendLoadResultMap(il)
     il.append(f.createInvoke(N_STATE_OBJ, "apply", T_STATE, Array(T_MAP), INVOKEVIRTUAL))
 
     //create return
@@ -246,7 +365,9 @@ object Compiler {
     mg.setMaxLocals()
     cg.addMethod(mg.getMethod)
 
-    cg.addEmptyConstructor(ACC_PUBLIC)
+    appendInfoConstructor(cg, cp)
+
+    //    cg.addEmptyConstructor(ACC_PUBLIC)
 
     val c = cg.getJavaClass
 
@@ -260,7 +381,7 @@ object Compiler {
 
     val loader = new ByteArrayClassLoader(Map(N_CLASS -> c.getBytes), Seq.empty, this.getClass.getClassLoader)
     val exeClass = loader.findClass(N_CLASS)
-    val exe = exeClass.getConstructor().newInstance().asInstanceOf[Executable]
+    val exe = exeClass.getConstructor(classOf[ProgramInfo]).newInstance(programInfo).asInstanceOf[Executable]
     exe
 
     //for each frontlet variable get a requirement prototype (based on getters)
@@ -276,6 +397,19 @@ object Compiler {
     //create commands that assign correct values to fields and variables
   }
 
+
+  def appendUpdateMap(il: InstructionList, f: InstructionFactory): InstructionHandle = {
+    il.append(f.createInvoke(N_MMAP, "update", Type.VOID, Array(Type.OBJECT, Type.OBJECT), INVOKEINTERFACE))
+  }
+
+  def appendBoxInt(il: InstructionList, f: InstructionFactory) {
+    il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
+  }
+
+  def appendGetProgramInfo(il: InstructionList, f: InstructionFactory) {
+    appendThis(il)
+    il.append(f.createGetField(N_CLASS, N_INFO_FIELD, T_PROGRAM_INFO))
+  }
 
   def appendCreateEmptyHashMap(il: InstructionList, f: InstructionFactory) {
     il.append(f.createNew(N_HASHMAP))
@@ -295,15 +429,19 @@ object Compiler {
       y := x,
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
-    val exe = compile(program)
-    println("Result: " + exe.execute(State(Map.empty)))
+    val simpleProgram = Program(Seq(
+      x := Const(5) + 5
+    ))
+
+    val exe = compile(simpleProgram)
+    val result = exe.execute(State(Map.empty))
+    println("Result: " + result)
+    println("x: " + result.get(x))
 
     for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
       println("%-20s %s".format(term, accessPrototype(term)))
     }
 
-
-    val person = new Person().age(36)
     val cg = new ClassGen("Person", "java.lang.Object", "<generated>", ACC_PUBLIC | ACC_SUPER, null)
     val cp = cg.getConstantPool
     val ageField = new FieldGen(ACC_PUBLIC | ACC_FINAL, Type.INT, "age", cp).getField
