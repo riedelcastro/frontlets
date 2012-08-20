@@ -154,7 +154,7 @@ object Example {
 
 class ProgramInfo(val boundVariables: Array[Var[Any]],
                   val freeVariables: Array[Var[Any]],
-                  val objectConstants: Array[AnyRef]) {
+                  val allTerms: Array[Term[Any]]) {
 
 }
 
@@ -164,6 +164,8 @@ object Compiler {
 
   //helpers
   val N_CLASS = "SomeName"
+  val N_TERM = classOf[Term[Any]].getName
+  val N_CONST = classOf[Const[Any]].getName
   val N_HASHMAP = classOf[scala.collection.mutable.HashMap[Any, Any]].getName
   val N_MMAP = classOf[scala.collection.mutable.Map[Any, Any]].getName
   val N_MAP = classOf[scala.collection.Map[Any, Any]].getName
@@ -176,7 +178,8 @@ object Compiler {
   val N_FREE_VARIABLES = "freeVariables"
   val N_INTEGER = classOf[java.lang.Integer].getName
 
-
+  val T_TERM = new ObjectType(N_TERM)
+  val T_CONST = new ObjectType(N_CONST)
   val T_STATE = new ObjectType(classOf[State].getName)
   val T_PROGRAM_INFO = new ObjectType(N_PROGRAM_INFO)
   val T_STATE_OBJ = new ObjectType(N_STATE_OBJ)
@@ -249,9 +252,10 @@ object Compiler {
     println(free)
 
     //info used in the executable
-    val programInfo = new ProgramInfo(bound.toArray, free.toArray, Array.empty)
+    val programInfo = new ProgramInfo(bound.toArray, free.toArray, allTerms.toArray)
     val bound2InfoIndex = programInfo.boundVariables.zipWithIndex.toMap
     val free2InfoIndex = programInfo.freeVariables.zipWithIndex.toMap
+    val term2InfoIndex = programInfo.allTerms.zipWithIndex.toMap
 
     def appendVariable(il: InstructionList, f: InstructionFactory, variable: Var[Any], method: String, index: Int) {
       appendGetProgramInfo(il, f)
@@ -259,6 +263,20 @@ object Compiler {
       il.append(new ICONST(index))
       il.append(new AALOAD)
     }
+
+    def appendTerm(il: InstructionList, f: InstructionFactory, index: Int) {
+      appendGetProgramInfo(il, f)
+      il.append(f.createInvoke(N_PROGRAM_INFO, "allTerms", new ArrayType(T_TERM, 1), Array.empty, INVOKEVIRTUAL))
+      il.append(new ICONST(index))
+      il.append(new AALOAD)
+    }
+
+    def appendConstant(il:InstructionList, f:InstructionFactory, index:Int) {
+      appendTerm(il,f,index)
+      il.append(f.createCast(T_TERM, T_CONST))
+      il.append(f.createInvoke(classOf[Const[Any]].getName,"value",Type.OBJECT,Array.empty,INVOKEVIRTUAL))
+    }
+
 
     //get all access prototypes
     val accessPrototypes = allTerms.flatMap(accessPrototype(_))
@@ -303,9 +321,9 @@ object Compiler {
 
     def appendCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
       term match {
-        case Const(value) => value match {
+        case c@Const(value) => value match {
           case i: Int => il.append(new ICONST(i))
-          case _ => il.append(new ACONST_NULL)
+          case _ => appendConstant(il,f,term2InfoIndex(c))
         }
         case IntSum(args) =>
           for (arg <- args) appendCompiledTerm(arg, il, f)
@@ -430,13 +448,15 @@ object Compiler {
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
     val simpleProgram = Program(Seq(
-      x := Const(5) + 5
+      x := Const(5) + 5,
+      z := new Person().age(35)
     ))
 
     val exe = compile(simpleProgram)
     val result = exe.execute(State(Map.empty))
     println("Result: " + result)
     println("x: " + result.get(x))
+    println("z: " + result.get(z))
 
     for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
       println("%-20s %s".format(term, accessPrototype(term)))
