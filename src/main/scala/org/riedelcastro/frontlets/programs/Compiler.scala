@@ -21,10 +21,18 @@ object State {
   }
 }
 
-sealed trait Term[+T] {
-  def eval(state: State): Option[T]
+trait Eval {
+  def apply[T](term: Term[T], state: State): Option[T]
+}
 
-  def prototype:T
+object Eval extends Eval {
+  def apply[T](term: Term[T], state: State) = term.eval(state)
+}
+
+sealed trait Term[+T] {
+  def eval(state: State, eval: Eval = Eval): Option[T]
+
+  def prototype: T
 
   def children: Seq[Term[Any]] = Seq.empty
 
@@ -37,7 +45,7 @@ case class Binding[+T](variable: Var[T], value: T)
 trait Var[+T] extends Term[T] {
   def name: String
 
-  def eval(state: State) = state.get(this)
+  def eval(state: State, eval: Eval) = state.get(this)
 }
 
 case class FrontletVar[F <: AbstractFrontlet](name: String, constructor: () => F) extends FrontletTerm[F] with Var[F] {
@@ -59,7 +67,7 @@ trait IntTerm extends Term[Int] {
 }
 
 case class IntSum(args: Seq[Term[Int]]) extends IntTerm {
-  def eval(state: State) = Util.allOrNone(args.map(_.eval(state))).map(_.sum)
+  def eval(state: State, eval: Eval) = Util.allOrNone(args.map(eval(_, state))).map(_.sum)
 
   override def children = args
 
@@ -67,7 +75,7 @@ case class IntSum(args: Seq[Term[Int]]) extends IntTerm {
 }
 
 case class ProxyTerm[+T](self: Term[T]) extends Term[T] with Proxy {
-  def eval(state: State) = self.eval(state)
+  def eval(state: State, eval: Eval) = self.eval(state)
 
   def prototype = self.prototype
 }
@@ -79,12 +87,13 @@ trait Command
 case class Program(commands: Seq[Command])
 
 case class Const[+T](value: T) extends Term[T] {
-  def eval(state: State) = Some(value)
+  def eval(state: State, eval: Eval) = Some(value)
+
   def prototype = value
 }
 
 case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]) extends Term[T] {
-  def eval(state: State) = frontlet.eval(state).map(slot(_).value)
+  def eval(state: State, eval: Eval) = eval(frontlet, (state)).map(slot(_).value)
 
   override def children = Seq(frontlet)
 
@@ -93,7 +102,7 @@ case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]
 
 case class Set[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T], value: Term[T])
   extends FrontletTerm[F#FrontletType] {
-  def eval(state: State) = for (f <- frontlet.eval(state); v <- value.eval(state)) yield slot(f) := v
+  def eval(state: State, eval: Eval) = for (f <- frontlet.eval(state); v <- eval(value, state)) yield slot(f) := v
 
   override def children = Seq(frontlet, value)
 
@@ -145,14 +154,14 @@ object Compiler {
 
   import Constants._
 
-  case class AccessPrototype(v:Var[AbstractFrontlet],proto:AbstractFrontlet) {
-    def +(that:AccessPrototype) = copy(proto = proto += that.proto)
+  case class AccessPrototype(v: Var[AbstractFrontlet], proto: AbstractFrontlet) {
+    def +(that: AccessPrototype) = copy(proto = proto += that.proto)
   }
 
-  def accessPrototype(term:Term[Any]):Option[AccessPrototype] = {
+  def accessPrototype(term: Term[Any]): Option[AccessPrototype] = {
     term match {
-      case Get(f,s) => for (a <- accessPrototype(f)) yield a.copy(proto = s(a.proto).setToDefault())
-      case v@FrontletVar(name,constructor) => Some(AccessPrototype(v,constructor()))
+      case Get(f, s) => for (a <- accessPrototype(f)) yield a.copy(proto = s(a.proto).setToDefault())
+      case v@FrontletVar(name, constructor) => Some(AccessPrototype(v, constructor()))
       case _ => None
     }
   }
@@ -164,10 +173,10 @@ object Compiler {
     }
   }
 
-  def compile(program: Program) {
+  def compile(program: Program): Executable = {
 
     //get all terms
-    val terms = program.commands.collect({case Assignment(_,term) => term})
+    val terms = program.commands.collect({ case Assignment(_, term) => term })
     val allTerms = terms.flatMap(_.all)
 
     //get free and bound variables
@@ -194,10 +203,39 @@ object Compiler {
     println(var2accessPrototype)
 
     println("Prototypes: ")
-    for (term <- allTerms){
-      println("%-30s %s".format(term,term.prototype))
+    for (term <- allTerms) {
+      println("%-30s %s".format(term, term.prototype))
     }
     println("****")
+
+    //helpers
+    val N_CLASS = "SomeName"
+    val T_STATE = new ObjectType(classOf[State].getName)
+    val N_EXE = classOf[Executable].getName
+
+    //build the actual executable
+    val cg = new ClassGen(N_CLASS, "java.lang.Object", "<generated>", ACC_PUBLIC | ACC_SUPER, Array(N_EXE))
+    val cp = cg.getConstantPool
+
+    val il = new InstructionList()
+    val f = new InstructionFactory(cg)
+    val mg = new MethodGen(ACC_PUBLIC, T_STATE, Array[Type](T_STATE), Array("input"), "execute", N_CLASS, il, cp)
+    il.append(new ACONST_NULL)
+    il.append(f.createCast(Type.NULL,T_STATE))
+    il.append(new ARETURN)
+    mg.setMaxStack()
+    cg.addMethod(mg.getMethod)
+
+    cg.addEmptyConstructor(ACC_PUBLIC)
+
+    val c = cg.getJavaClass
+
+
+    val loader = new ByteArrayClassLoader(Map(N_CLASS -> c.getBytes), Seq.empty, this.getClass.getClassLoader)
+    val exeClass = loader.findClass(N_CLASS)
+    val exe = exeClass.getConstructor().newInstance().asInstanceOf[Executable]
+    exe
+
 
 
     //for each frontlet variable get a requirement prototype (based on getters)
@@ -217,8 +255,8 @@ object Compiler {
   def main(args: Array[String]) {
 
     import TermImplicits._
-    val x = SimpleVar("x",0)
-    val y = SimpleVar("y",0)
+    val x = SimpleVar("x", 0)
+    val y = SimpleVar("y", 0)
     val z = FrontletVar("z", () => new Person)
     val u = FrontletVar("u", () => new Person)
     def Person = Const(new Person)
@@ -226,10 +264,12 @@ object Compiler {
       y := x,
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
-    compile(program)
+    val exe = compile(program)
+
+    println("Result: " + exe.execute(State(Map.empty)))
 
     for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
-      println("%-20s %s".format(term,accessPrototype(term)))
+      println("%-20s %s".format(term, accessPrototype(term)))
     }
 
 
@@ -273,7 +313,7 @@ class SimpleExecutable extends Executable {
 
   def execute(input: State) = {
     val map = new collection.mutable.HashMap[Var[Any], Any]
-    map(SimpleVar("age",0)) = age
+    map(SimpleVar("age", 0)) = age
     State(map)
   }
 }
