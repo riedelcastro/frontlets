@@ -372,9 +372,9 @@ object Compiler {
     val var2LocalIndex = new mutable.HashMap[Var[Any], Int]
 
     def appendBoxedCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
-      appendCompiledTerm(term,il,f)
+      appendCompiledTerm(term, il, f)
       term.prototype match {
-        case i:Int => appendBox(il,f,T_INTEGER)
+        case i: Int => appendBox(il, f, T_INTEGER)
       }
     }
 
@@ -404,20 +404,24 @@ object Compiler {
       //unbox if necessary
       appendUnbox(resultType, il, f)
     }
+
     def appendCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
       term match {
-        case c@Const(value) => value match {
+
+        // Append the value of the constant
+        case Const(value) => value match {
           case i: Int => il.append(new ICONST(i))
-          case _ => appendConstant(il, f, term2InfoIndex(c))
+          case _ => appendConstant(il, f, term2InfoIndex(term))
         }
+
+        // Summing integers
         case IntSum(args) =>
           for (arg <- args) appendCompiledTerm(arg, il, f)
-          //sum terms
           for (_ <- 0 until (args.size - 1)) il.append(new IADD)
+
+        // Call out generic eval method
         case _ =>
           appendGenericCompiledTerm(term, il, f)
-
-
       }
     }
 
@@ -509,7 +513,7 @@ object Compiler {
     il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
   }
 
-  def appendBox(il: InstructionList, f: InstructionFactory, target:Type) {
+  def appendBox(il: InstructionList, f: InstructionFactory, target: Type) {
     target match {
       case t if (t == T_INTEGER) =>
         il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
@@ -517,7 +521,7 @@ object Compiler {
   }
 
 
-  def appendUnboxInteger(il:InstructionList, f:InstructionFactory) {
+  def appendUnboxInteger(il: InstructionList, f: InstructionFactory) {
     il.append(f.createInvoke(N_INTEGER, "intValue", Type.INT, Array.empty, INVOKEVIRTUAL))
   }
 
