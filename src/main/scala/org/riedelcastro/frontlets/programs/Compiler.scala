@@ -27,7 +27,8 @@ trait Eval {
 
 object Eval extends Eval {
   def apply[T](term: Term[T], state: State) = term.eval(state)
-  def apply(terms:Array[Term[Any]],values:Array[AnyRef]):Eval = new Eval {
+
+  def apply(terms: Array[Term[Any]], values: Array[AnyRef]): Eval = new Eval {
     lazy val map = (terms.zip(values)).toMap
 
     def apply[T](term: Term[T], state: State) = map.get(term).asInstanceOf[Option[T]]
@@ -176,6 +177,9 @@ object Compiler {
   val N_MAP = classOf[scala.collection.Map[Any, Any]].getName
   val N_EXE = classOf[Executable].getName
   val N_STATE_OBJ = State.getClass.getName
+  val N_EVAL_OBJ = Eval.getClass.getName
+  val N_OPTION = classOf[Option[Any]].getName
+
   val N_INFO_FIELD = "info"
   val N_PROGRAM_INFO = classOf[ProgramInfo].getName
   val N_VAR = classOf[Var[Any]].getName
@@ -188,9 +192,41 @@ object Compiler {
   val T_STATE = new ObjectType(classOf[State].getName)
   val T_PROGRAM_INFO = new ObjectType(N_PROGRAM_INFO)
   val T_STATE_OBJ = new ObjectType(N_STATE_OBJ)
+  val T_EVAL_OBJ = new ObjectType(N_EVAL_OBJ)
+  val T_EVAL = new ObjectType(classOf[Eval].getName)
+
   val T_MAP = new ObjectType(N_MAP)
   val T_VAR = new ObjectType(N_VAR)
   val T_INTEGER = new ObjectType(N_INTEGER)
+  val T_OPTION = new ObjectType(N_OPTION)
+
+
+  class CompilationInfo(val info: ProgramInfo) {
+    private var currentLocalVarIndex = 2
+
+    def allocateLocalVariableIndex() = {
+      val old = currentLocalVarIndex
+      currentLocalVarIndex += 1
+      old
+    }
+
+    lazy val resultMapLocalIndex = allocateLocalVariableIndex()
+    lazy val bound2InfoIndex = info.boundVariables.zipWithIndex.toMap
+    lazy val free2InfoIndex = info.freeVariables.zipWithIndex.toMap
+    lazy val term2InfoIndex = info.allTerms.zipWithIndex.toMap
+
+    def appendLoadResultMap(il: InstructionList) {
+      il.append(new ALOAD(resultMapLocalIndex))
+    }
+
+    def appendLoadResultState(il: InstructionList, f: InstructionFactory) {
+      il.append(f.createGetStatic(N_STATE_OBJ, "MODULE$", T_STATE_OBJ))
+      appendLoadResultMap(il)
+      il.append(f.createInvoke(N_STATE_OBJ, "apply", T_STATE, Array(T_MAP), INVOKEVIRTUAL))
+    }
+
+  }
+
 
   case class AccessPrototype(v: Var[AbstractFrontlet], proto: AbstractFrontlet) {
     def +(that: AccessPrototype) = copy(proto = proto += that.proto)
@@ -211,6 +247,28 @@ object Compiler {
     }
   }
 
+  def appendCreateObjectArray(il: InstructionList, f: InstructionFactory, elements: Seq[InstructionList => Unit], cast: Type) {
+    il.append(f.createNewArray(Type.OBJECT, 1))
+    for ((element, index) <- elements.zipWithIndex) {
+      il.append(new DUP)
+      il.append(new ICONST(index))
+      element(il)
+      il.append(new AASTORE)
+    }
+    if (cast != Type.OBJECT) {
+      il.append(f.createCast(Type.OBJECT, cast))
+    }
+  }
+
+  def appendCreateEval(il: InstructionList, f: InstructionFactory,
+                       terms: Seq[InstructionList => Unit], values: Seq[InstructionList => Unit]) {
+    il.append(f.createGetStatic(N_EVAL_OBJ, "MODULE$", T_EVAL_OBJ))
+    appendCreateObjectArray(il, f, terms, T_TERM)
+    appendCreateObjectArray(il, f, values, Type.OBJECT)
+    il.append(f.createInvoke(N_EVAL_OBJ, "apply", T_EVAL,
+      Array(new ArrayType(Type.OBJECT, 1), new ArrayType(Type.OBJECT, 1)), INVOKEVIRTUAL))
+  }
+
   def appendInfoConstructor(cg: ClassGen, cp: ConstantPoolGen) {
     val il = new InstructionList()
     val f = new InstructionFactory(cg)
@@ -224,7 +282,6 @@ object Compiler {
     mg.setMaxLocals()
     mg.setMaxStack()
     cg.addMethod(mg.getMethod)
-
   }
 
   def appendThis(il: InstructionList) {
@@ -258,9 +315,6 @@ object Compiler {
 
     //info used in the executable
     val programInfo = new ProgramInfo(bound.toArray, free.toArray, allTerms.toArray)
-    val bound2InfoIndex = programInfo.boundVariables.zipWithIndex.toMap
-    val free2InfoIndex = programInfo.freeVariables.zipWithIndex.toMap
-    val term2InfoIndex = programInfo.allTerms.zipWithIndex.toMap
 
     def appendVariable(il: InstructionList, f: InstructionFactory, variable: Var[Any], method: String, index: Int) {
       appendGetProgramInfo(il, f)
@@ -276,10 +330,10 @@ object Compiler {
       il.append(new AALOAD)
     }
 
-    def appendConstant(il:InstructionList, f:InstructionFactory, index:Int) {
-      appendTerm(il,f,index)
+    def appendConstant(il: InstructionList, f: InstructionFactory, index: Int) {
+      appendTerm(il, f, index)
       il.append(f.createCast(T_TERM, T_CONST))
-      il.append(f.createInvoke(classOf[Const[Any]].getName,"value",Type.OBJECT,Array.empty,INVOKEVIRTUAL))
+      il.append(f.createInvoke(classOf[Const[Any]].getName, "value", Type.OBJECT, Array.empty, INVOKEVIRTUAL))
     }
 
 
@@ -305,27 +359,6 @@ object Compiler {
     val f = new InstructionFactory(cg)
     val mg = new MethodGen(ACC_PUBLIC, T_STATE, Array[Type](T_STATE), Array("input"), "execute", N_CLASS, il, cp)
 
-    class CompilationInfo(val info:ProgramInfo) {
-      private var currentLocalVarIndex = 2
-      def allocateLocalVariableIndex() = {
-        val old = currentLocalVarIndex
-        currentLocalVarIndex += 1
-        old
-      }
-      lazy val resultMapLocalIndex = allocateLocalVariableIndex()
-
-
-      def appendLoadResultMap(il: InstructionList) {
-        il.append(new ALOAD(resultMapLocalIndex))
-      }
-
-      def appendLoadResultState(il:InstructionList, f:InstructionFactory) {
-        il.append(f.createGetStatic(N_STATE_OBJ, "MODULE$", T_STATE_OBJ))
-        appendLoadResultMap(il)
-        il.append(f.createInvoke(N_STATE_OBJ, "apply", T_STATE, Array(T_MAP), INVOKEVIRTUAL))
-      }
-
-    }
 
     val compilationInfo = new CompilationInfo(programInfo)
     import compilationInfo._
@@ -338,24 +371,53 @@ object Compiler {
     //remember variable to local index mapping
     val var2LocalIndex = new mutable.HashMap[Var[Any], Int]
 
+    def appendBoxedCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
+      appendCompiledTerm(term,il,f)
+      term.prototype match {
+        case i:Int => appendBox(il,f,T_INTEGER)
+      }
+    }
+
+    def appendGenericCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
+      //figure out result type (this is boxed!)
+      val resultType = new ObjectType(term.prototype.getClass.getName)
+
+      //put term object on stack
+      appendTerm(il, f, term2InfoIndex(term))
+      //put current state on stack
+      appendLoadResultState(il, f)
+      //put eval object on stack
+      appendCreateEval(il, f,
+        term.children.map((t: Term[Any]) => (list: InstructionList) => appendTerm(list, f, term2InfoIndex(t))),
+        term.children.map((t: Term[Any]) => (list: InstructionList) => appendBoxedCompiledTerm(t, list, f)))
+      //call top.eval
+      il.append(f.createInvoke(N_TERM, "eval", T_OPTION, Array(
+        new ArrayType(T_TERM, 1),
+        new ArrayType(Type.OBJECT, 1)), INVOKEVIRTUAL))
+
+      //call top.get
+      il.append(f.createInvoke(N_OPTION, "get", Type.OBJECT, Array.empty, INVOKEVIRTUAL))
+
+      //cast
+      il.append(f.createCast(Type.OBJECT, resultType))
+
+      //unbox if necessary
+      appendUnbox(resultType, il, f)
+    }
     def appendCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
       term match {
         case c@Const(value) => value match {
           case i: Int => il.append(new ICONST(i))
-          case _ => appendConstant(il,f,term2InfoIndex(c))
+          case _ => appendConstant(il, f, term2InfoIndex(c))
         }
         case IntSum(args) =>
           for (arg <- args) appendCompiledTerm(arg, il, f)
           //sum terms
           for (_ <- 0 until (args.size - 1)) il.append(new IADD)
         case _ =>
-          term.prototype match {
-            case i: Int =>
-              il.append(new ICONST(i))
-            case o =>
-              il.append(new ACONST_NULL)
-              il.append(f.createCast(Type.NULL, new ObjectType(o.getClass.getName)))
-          }
+          appendGenericCompiledTerm(term, il, f)
+
+
       }
     }
 
@@ -390,7 +452,7 @@ object Compiler {
     }
 
     //create the return state
-    appendLoadResultState(il,f)
+    appendLoadResultState(il, f)
 
     //create return
     il.append(new ARETURN)
@@ -433,12 +495,30 @@ object Compiler {
   }
 
 
+  def appendUnbox[T](resultType: ObjectType, il: InstructionList, f: InstructionFactory) {
+    resultType match {
+      case t if (t == T_INTEGER) => appendUnboxInteger(il, f)
+    }
+  }
+
   def appendUpdateMap(il: InstructionList, f: InstructionFactory): InstructionHandle = {
     il.append(f.createInvoke(N_MMAP, "update", Type.VOID, Array(Type.OBJECT, Type.OBJECT), INVOKEINTERFACE))
   }
 
   def appendBoxInt(il: InstructionList, f: InstructionFactory) {
     il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
+  }
+
+  def appendBox(il: InstructionList, f: InstructionFactory, target:Type) {
+    target match {
+      case t if (t == T_INTEGER) =>
+        il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
+    }
+  }
+
+
+  def appendUnboxInteger(il:InstructionList, f:InstructionFactory) {
+    il.append(f.createInvoke(N_INTEGER, "intValue", Type.INT, Array.empty, INVOKEVIRTUAL))
   }
 
   def appendGetProgramInfo(il: InstructionList, f: InstructionFactory) {
