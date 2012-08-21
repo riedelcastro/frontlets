@@ -27,6 +27,11 @@ trait Eval {
 
 object Eval extends Eval {
   def apply[T](term: Term[T], state: State) = term.eval(state)
+  def apply(terms:Array[Term[Any]],values:Array[AnyRef]):Eval = new Eval {
+    lazy val map = (terms.zip(values)).toMap
+
+    def apply[T](term: Term[T], state: State) = map.get(term).asInstanceOf[Option[T]]
+  }
 }
 
 sealed trait Term[+T] {
@@ -300,21 +305,35 @@ object Compiler {
     val f = new InstructionFactory(cg)
     val mg = new MethodGen(ACC_PUBLIC, T_STATE, Array[Type](T_STATE), Array("input"), "execute", N_CLASS, il, cp)
 
-    var currentLocalVarIndex = 2
-    def allocateLocalVariableIndex() = {
-      val old = currentLocalVarIndex
-      currentLocalVarIndex += 1
-      old
+    class CompilationInfo(val info:ProgramInfo) {
+      private var currentLocalVarIndex = 2
+      def allocateLocalVariableIndex() = {
+        val old = currentLocalVarIndex
+        currentLocalVarIndex += 1
+        old
+      }
+      lazy val resultMapLocalIndex = allocateLocalVariableIndex()
+
+
+      def appendLoadResultMap(il: InstructionList) {
+        il.append(new ALOAD(resultMapLocalIndex))
+      }
+
+      def appendLoadResultState(il:InstructionList, f:InstructionFactory) {
+        il.append(f.createGetStatic(N_STATE_OBJ, "MODULE$", T_STATE_OBJ))
+        appendLoadResultMap(il)
+        il.append(f.createInvoke(N_STATE_OBJ, "apply", T_STATE, Array(T_MAP), INVOKEVIRTUAL))
+      }
+
     }
+
+    val compilationInfo = new CompilationInfo(programInfo)
+    import compilationInfo._
+
 
     //create an empty hashmap
-    val resultMapLocalIndex = allocateLocalVariableIndex()
     appendCreateEmptyHashMap(il, f)
     il.append(new ASTORE(resultMapLocalIndex))
-
-    def appendLoadResultMap(il: InstructionList) {
-      il.append(new ALOAD(resultMapLocalIndex))
-    }
 
     //remember variable to local index mapping
     val var2LocalIndex = new mutable.HashMap[Var[Any], Int]
@@ -371,9 +390,7 @@ object Compiler {
     }
 
     //create the return state
-    il.append(f.createGetStatic(N_STATE_OBJ, "MODULE$", T_STATE_OBJ))
-    appendLoadResultMap(il)
-    il.append(f.createInvoke(N_STATE_OBJ, "apply", T_STATE, Array(T_MAP), INVOKEVIRTUAL))
+    appendLoadResultState(il,f)
 
     //create return
     il.append(new ARETURN)
