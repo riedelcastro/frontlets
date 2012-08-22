@@ -1,12 +1,14 @@
 package org.riedelcastro.frontlets.programs
 
 import org.apache.bcel.generic._
-import org.apache.bcel.Constants
+import org.apache.bcel.{Repository, Constants}
 import tools.nsc.util.ScalaClassLoader.URLClassLoader
 import java.net.URL
 import scala.collection
 import collection.mutable
+import collection.mutable.ArrayBuffer
 import org.riedelcastro.frontlets.{Frontlet, AbstractFrontlet}
+import org.apache.bcel.verifier.Verifier
 
 /**
  * @author riedelcastro
@@ -28,7 +30,7 @@ trait Eval {
 object Eval extends Eval {
   def apply[T](term: Term[T], state: State) = term.eval(state)
 
-  def apply(terms: Array[Term[Any]], values: Array[AnyRef]): Eval = new Eval {
+  def apply(terms: Seq[Term[Any]], values: Seq[AnyRef]): Eval = new Eval {
     lazy val map = (terms.zip(values)).toMap
 
     def apply[T](term: Term[T], state: State) = map.get(term).asInstanceOf[Option[T]]
@@ -82,10 +84,12 @@ case class IntSum(args: Seq[Term[Int]]) extends IntTerm {
   def prototype = 0
 }
 
-case class ProxyTerm[+T](self: Term[T]) extends Term[T] with Proxy {
+case class ProxyTerm[+T](self: Term[T]) extends Term[T] {
   def eval(state: State, eval: Eval) = self.eval(state)
 
   def prototype = self.prototype
+
+  override def children = self +: self.children
 }
 
 case class Assignment[+T](variable: Var[T], term: Term[T]) extends Command
@@ -179,6 +183,7 @@ object Compiler {
   val N_STATE_OBJ = State.getClass.getName
   val N_EVAL_OBJ = Eval.getClass.getName
   val N_OPTION = classOf[Option[Any]].getName
+  val N_SEQ = classOf[Seq[Any]].getName
 
   val N_INFO_FIELD = "info"
   val N_PROGRAM_INFO = classOf[ProgramInfo].getName
@@ -186,6 +191,8 @@ object Compiler {
   val N_BOUND_VARIABLES = "boundVariables"
   val N_FREE_VARIABLES = "freeVariables"
   val N_INTEGER = classOf[java.lang.Integer].getName
+  val N_ARRAYBUFFER = classOf[ArrayBuffer[Any]].getName
+
 
   val T_TERM = new ObjectType(N_TERM)
   val T_CONST = new ObjectType(N_CONST)
@@ -199,6 +206,8 @@ object Compiler {
   val T_VAR = new ObjectType(N_VAR)
   val T_INTEGER = new ObjectType(N_INTEGER)
   val T_OPTION = new ObjectType(N_OPTION)
+  val T_ARRAYBUFFER = new ObjectType(N_ARRAYBUFFER)
+  val T_SEQ = new ObjectType(N_SEQ)
 
 
   class CompilationInfo(val info: ProgramInfo) {
@@ -248,6 +257,7 @@ object Compiler {
   }
 
   def appendCreateObjectArray(il: InstructionList, f: InstructionFactory, elements: Seq[InstructionList => Unit], cast: Type) {
+    il.append(new ICONST(elements.size))
     il.append(f.createNewArray(Type.OBJECT, 1))
     for ((element, index) <- elements.zipWithIndex) {
       il.append(new DUP)
@@ -256,17 +266,27 @@ object Compiler {
       il.append(new AASTORE)
     }
     if (cast != Type.OBJECT) {
-      il.append(f.createCast(Type.OBJECT, cast))
+      il.append(f.createCast(Type.OBJECT, new ArrayType(cast, 1)))
     }
   }
+
+  def appendCreateObjectSeq(il: InstructionList, f: InstructionFactory, elements: Seq[InstructionList => Unit]) {
+    il.append(f.createNew(N_ARRAYBUFFER))
+    il.append(new DUP)
+    il.append(f.createInvoke(N_ARRAYBUFFER, "<init>", Type.VOID, Array.empty, INVOKESPECIAL))
+    for ((element, index) <- elements.zipWithIndex) {
+      element(il)
+      il.append(f.createInvoke(N_ARRAYBUFFER, "$plus$eq", T_ARRAYBUFFER, Array(Type.OBJECT), INVOKEVIRTUAL))
+    }
+  }
+
 
   def appendCreateEval(il: InstructionList, f: InstructionFactory,
                        terms: Seq[InstructionList => Unit], values: Seq[InstructionList => Unit]) {
     il.append(f.createGetStatic(N_EVAL_OBJ, "MODULE$", T_EVAL_OBJ))
-    appendCreateObjectArray(il, f, terms, T_TERM)
-    appendCreateObjectArray(il, f, values, Type.OBJECT)
-    il.append(f.createInvoke(N_EVAL_OBJ, "apply", T_EVAL,
-      Array(new ArrayType(Type.OBJECT, 1), new ArrayType(Type.OBJECT, 1)), INVOKEVIRTUAL))
+    appendCreateObjectSeq(il, f, terms)
+    appendCreateObjectSeq(il, f, values)
+    il.append(f.createInvoke(N_EVAL_OBJ, "apply", T_EVAL, Array(T_SEQ, T_SEQ), INVOKEVIRTUAL))
   }
 
   def appendInfoConstructor(cg: ClassGen, cp: ConstantPoolGen) {
@@ -375,6 +395,7 @@ object Compiler {
       appendCompiledTerm(term, il, f)
       term.prototype match {
         case i: Int => appendBox(il, f, T_INTEGER)
+        case _ =>
       }
     }
 
@@ -391,9 +412,7 @@ object Compiler {
         term.children.map((t: Term[Any]) => (list: InstructionList) => appendTerm(list, f, term2InfoIndex(t))),
         term.children.map((t: Term[Any]) => (list: InstructionList) => appendBoxedCompiledTerm(t, list, f)))
       //call top.eval
-      il.append(f.createInvoke(N_TERM, "eval", T_OPTION, Array(
-        new ArrayType(T_TERM, 1),
-        new ArrayType(Type.OBJECT, 1)), INVOKEVIRTUAL))
+      il.append(f.createInvoke(N_TERM, "eval", T_OPTION, Array(T_STATE, T_EVAL), INVOKEINTERFACE))
 
       //call top.get
       il.append(f.createInvoke(N_OPTION, "get", Type.OBJECT, Array.empty, INVOKEVIRTUAL))
@@ -406,12 +425,18 @@ object Compiler {
     }
 
     def appendCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
-      term match {
+
+      def unwrap(term: Term[T]) = term match {
+        case ProxyTerm(self) => self
+        case _ => term
+      }
+
+      unwrap(term) match {
 
         // Append the value of the constant
-        case Const(value) => value match {
+        case c@Const(value) => value match {
           case i: Int => il.append(new ICONST(i))
-          case _ => appendConstant(il, f, term2InfoIndex(term))
+          case _ => appendConstant(il, f, term2InfoIndex(c))
         }
 
         // Summing integers
@@ -434,10 +459,10 @@ object Compiler {
         appendVariable(il, f, variable, N_BOUND_VARIABLES, bound2InfoIndex(variable))
         //need to append a reference to the variable
         appendCompiledTerm(term, il, f)
-        il.append(new DUP)
         //duplicate to store both in local variable and in result map
 
         //this stores the result in the local variable for later use
+        il.append(new DUP)
         val localVarIndex = var2LocalIndex.getOrElseUpdate(variable, allocateLocalVariableIndex())
         variable.prototype match {
           case i: Int =>
@@ -479,6 +504,9 @@ object Compiler {
     }
     c.dump("/tmp/Generated.class")
 
+    Repository.addClass(c)
+
+    Verifier.main(Array(N_CLASS))
 
     val loader = new ByteArrayClassLoader(Map(N_CLASS -> c.getBytes), Seq.empty, this.getClass.getClassLoader)
     val exeClass = loader.findClass(N_CLASS)
@@ -502,11 +530,12 @@ object Compiler {
   def appendUnbox[T](resultType: ObjectType, il: InstructionList, f: InstructionFactory) {
     resultType match {
       case t if (t == T_INTEGER) => appendUnboxInteger(il, f)
+      case _ =>
     }
   }
 
   def appendUpdateMap(il: InstructionList, f: InstructionFactory): InstructionHandle = {
-    il.append(f.createInvoke(N_MMAP, "update", Type.VOID, Array(Type.OBJECT, Type.OBJECT), INVOKEINTERFACE))
+    il.append(f.createInvoke(classOf[mutable.MapLike[Any, Any, Any]].getName, "update", Type.VOID, Array(Type.OBJECT, Type.OBJECT), INVOKEINTERFACE))
   }
 
   def appendBoxInt(il: InstructionList, f: InstructionFactory) {
@@ -549,14 +578,16 @@ object Compiler {
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
     val simpleProgram = Program(Seq(
-      x := Const(5) + 5,
-      z := new Person().age(35)
+      //      x := Const(5) + 5
+      //      z := new Person().age(35),
+      y := Const(new Person().age(35))(_.age)
     ))
 
     val exe = compile(simpleProgram)
     val result = exe.execute(State(Map.empty))
     println("Result: " + result)
     println("x: " + result.get(x))
+    println("y: " + result.get(y))
     println("z: " + result.get(z))
 
     for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {

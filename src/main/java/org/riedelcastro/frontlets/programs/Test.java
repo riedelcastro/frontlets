@@ -1,5 +1,9 @@
 package org.riedelcastro.frontlets.programs;
 
+import scala.collection.Seq;
+import scala.collection.immutable.Seq$;
+import scala.collection.mutable.ArrayBuffer;
+
 /**
  * @author Sebastian Riedel
  */
@@ -19,10 +23,13 @@ public class Test implements Executable{
         Integer A = a;
         int k = A.intValue();
         scala.collection.mutable.Map<Var<Object>,Object> map = new scala.collection.mutable.HashMap<Var<Object>,Object>();
-        Var<Object> var = info.boundVariables()[0];
+        Var<Object> var = new SimpleVar<Object>("x",1);
         map.update(var, 1);
-        Term<Object>[] terms = (Term<Object>[]) new Object[]{var,var};
-        Object[] values = new Object[] {"A","B"};
+        ArrayBuffer<Term<Object>> terms = new ArrayBuffer<Term<Object>>();
+        terms.$plus$eq(var);
+        terms.$plus$eq(var);
+        ArrayBuffer<Object> values = new ArrayBuffer<Object>();
+
         Eval eval = Eval$.MODULE$.apply(terms,values);
         State state = State$.MODULE$.apply(map);
         var.eval(state,eval).get();
