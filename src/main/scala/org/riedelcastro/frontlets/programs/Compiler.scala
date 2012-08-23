@@ -184,6 +184,8 @@ object Compiler {
   val N_EVAL_OBJ = Eval.getClass.getName
   val N_OPTION = classOf[Option[Any]].getName
   val N_SEQ = classOf[Seq[Any]].getName
+  val N_STATE = classOf[State].getName
+
 
   val N_INFO_FIELD = "info"
   val N_PROGRAM_INFO = classOf[ProgramInfo].getName
@@ -196,7 +198,7 @@ object Compiler {
 
   val T_TERM = new ObjectType(N_TERM)
   val T_CONST = new ObjectType(N_CONST)
-  val T_STATE = new ObjectType(classOf[State].getName)
+  val T_STATE = new ObjectType(N_STATE)
   val T_PROGRAM_INFO = new ObjectType(N_PROGRAM_INFO)
   val T_STATE_OBJ = new ObjectType(N_STATE_OBJ)
   val T_EVAL_OBJ = new ObjectType(N_EVAL_OBJ)
@@ -339,14 +341,14 @@ object Compiler {
     def appendVariable(il: InstructionList, f: InstructionFactory, variable: Var[Any], method: String, index: Int) {
       appendGetProgramInfo(il, f)
       il.append(f.createInvoke(N_PROGRAM_INFO, method, new ArrayType(T_VAR, 1), Array.empty, INVOKEVIRTUAL))
-      il.append(new ICONST(index))
+      il.append(f.createConstant(index))
       il.append(new AALOAD)
     }
 
     def appendTerm(il: InstructionList, f: InstructionFactory, index: Int) {
       appendGetProgramInfo(il, f)
       il.append(f.createInvoke(N_PROGRAM_INFO, "allTerms", new ArrayType(T_TERM, 1), Array.empty, INVOKEVIRTUAL))
-      il.append(new ICONST(index))
+      il.append(f.createConstant(index))
       il.append(new AALOAD)
     }
 
@@ -390,6 +392,24 @@ object Compiler {
 
     //remember variable to local index mapping
     val var2LocalIndex = new mutable.HashMap[Var[Any], Int]
+    def getLocalVarForTermVar(variable: Var[Any]) = var2LocalIndex.getOrElseUpdate(variable, allocateLocalVariableIndex())
+
+    //put free variables into local variables
+    for (free <- programInfo.freeVariables) {
+      //put input state on the stack
+      il.append(new ALOAD(1)) //first argument of method
+      //put free variable on the stack
+      appendVariable(il, f, free, N_FREE_VARIABLES, compilationInfo.free2InfoIndex(free))
+      //call state.apply to get value
+      il.append(f.createInvoke(N_STATE, "get", T_OPTION, Array(T_VAR), INVOKEINTERFACE))
+      il.append(f.createInvoke(N_OPTION, "get", Type.OBJECT, Array.empty, INVOKEVIRTUAL))
+      //unbox if necessary
+      il.append(f.createCast(Type.OBJECT,termToObjectType(free)))
+      appendUnbox(termToObjectType(free), il, f)
+      //store as local variable
+      appendStoreUnboxedAsLocalVariable(il, f, free)
+
+    }
 
     def appendBoxedCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
       appendCompiledTerm(term, il, f)
@@ -398,6 +418,26 @@ object Compiler {
         case _ =>
       }
     }
+
+    def appendStoreUnboxedAsLocalVariable(il: InstructionList, f: InstructionFactory, variable: Var[Any]) {
+      val localVarIndex = getLocalVarForTermVar(variable)
+      variable.prototype match {
+        case i: Int =>
+          il.append(new ISTORE(localVarIndex))
+        case _ =>
+          il.append(new ASTORE(localVarIndex))
+      }
+    }
+
+    def termToObjectType(term: Term[Any]): ObjectType = {
+      new ObjectType(term.prototype.getClass.getName)
+    }
+
+    def appendStoreInResultMap(il: InstructionList, f: InstructionFactory, variable: Var[Any]) {
+      appendBox(il, f, termToObjectType(variable))
+      appendUpdateMap(il, f)
+    }
+
 
     def appendGenericCompiledTerm[T](term: Term[T], il: InstructionList, f: InstructionFactory) {
       //figure out result type (this is boxed!)
@@ -435,9 +475,17 @@ object Compiler {
 
         // Append the value of the constant
         case c@Const(value) => value match {
-          case i: Int => il.append(new ICONST(i))
+          case i: Int if (i >= -1 && i <= 5) => il.append(new ICONST(i))
+          case i: Int => il.append(f.createConstant(i))
           case _ => appendConstant(il, f, term2InfoIndex(c))
         }
+
+        case v: Var[_] => v.prototype match {
+          case i: Int => il.append(new ILOAD(getLocalVarForTermVar(v)))
+          case _ => il.append(new ALOAD(getLocalVarForTermVar(v)))
+        }
+
+        //          il.append()
 
         // Summing integers
         case IntSum(args) =>
@@ -456,28 +504,16 @@ object Compiler {
         //this requires created the current input state (arguments plus local)
         //get the map to call update on
         appendLoadResultMap(il)
+        //get the variable for the first argument of the map update call
         appendVariable(il, f, variable, N_BOUND_VARIABLES, bound2InfoIndex(variable))
-        //need to append a reference to the variable
+        //append the term result
         appendCompiledTerm(term, il, f)
         //duplicate to store both in local variable and in result map
-
-        //this stores the result in the local variable for later use
         il.append(new DUP)
-        val localVarIndex = var2LocalIndex.getOrElseUpdate(variable, allocateLocalVariableIndex())
-        variable.prototype match {
-          case i: Int =>
-            //store result in local variable
-            il.append(new ISTORE(localVarIndex))
-            //store result in map
-            appendBoxInt(il, f)
-            appendUpdateMap(il, f)
-          case _ =>
-            il.append(new ASTORE(localVarIndex))
-            appendUpdateMap(il, f)
-        }
-
-      //this stores the result in the map
-      //il.append()
+        //store result in local variable
+        appendStoreUnboxedAsLocalVariable(il, f, variable)
+        //now call update map.update(variable,result)
+        appendStoreInResultMap(il, f, variable)
     }
 
     //create the return state
@@ -546,6 +582,7 @@ object Compiler {
     target match {
       case t if (t == T_INTEGER) =>
         il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
+      case _ =>
     }
   }
 
@@ -568,6 +605,7 @@ object Compiler {
   def main(args: Array[String]) {
 
     import TermImplicits._
+    val i = SimpleVar("i", 0)
     val x = SimpleVar("x", 0)
     val y = SimpleVar("y", 0)
     val z = FrontletVar("z", () => new Person)
@@ -578,48 +616,20 @@ object Compiler {
       z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
     ))
     val simpleProgram = Program(Seq(
-      //      x := Const(5) + 5
-      //      z := new Person().age(35),
-      y := Const(new Person().age(35))(_.age)
+      x := Const(5) + i,
+      y := Const(new Person().age(35))(_.age, i)(_.age)
     ))
 
     val exe = compile(simpleProgram)
-    val result = exe.execute(State(Map.empty))
+    val result = exe.execute(State(Map(i -> 3)))
     println("Result: " + result)
     println("x: " + result.get(x))
     println("y: " + result.get(y))
     println("z: " + result.get(z))
 
-    for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
-      println("%-20s %s".format(term, accessPrototype(term)))
-    }
-
-    val cg = new ClassGen("Person", "java.lang.Object", "<generated>", ACC_PUBLIC | ACC_SUPER, null)
-    val cp = cg.getConstantPool
-    val ageField = new FieldGen(ACC_PUBLIC | ACC_FINAL, Type.INT, "age", cp).getField
-    cg.addField(ageField)
-
-    val il = new InstructionList()
-    val f = new InstructionFactory(cg)
-    val mg = new MethodGen(ACC_PUBLIC,
-      Type.VOID, Array[Type](Type.INT), Array("age"), "<init>", "Person", il, cp)
-
-    il.append(new ALOAD(0))
-    il.append(f.createInvoke("java.lang.Object", "<init>", Type.VOID, Array.empty, INVOKESPECIAL))
-    il.append(new ALOAD(0))
-    il.append(new ILOAD(1))
-    il.append(f.createPutField("Person", "age", Type.INT))
-    il.append(new RETURN)
-
-    mg.setMaxStack()
-    cg.addMethod(mg.getMethod)
-
-    val c = cg.getJavaClass
-    c.dump("/tmp/Person.class")
-    val loader = new ByteArrayClassLoader(Map("Person" -> c.getBytes), Seq.empty, this.getClass.getClassLoader)
-    val personClass = loader.findClass("Person")
-    val newPerson = personClass.getConstructor(classOf[Int]).newInstance(new Integer(36))
-
+    //    for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
+    //      println("%-20s %s".format(term, accessPrototype(term)))
+    //    }
   }
 }
 
