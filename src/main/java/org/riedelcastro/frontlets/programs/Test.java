@@ -1,5 +1,7 @@
 package org.riedelcastro.frontlets.programs;
 
+import scala.Option;
+import scala.collection.Map;
 import scala.collection.Seq;
 import scala.collection.immutable.Seq$;
 import scala.collection.mutable.ArrayBuffer;
@@ -22,6 +24,7 @@ public class Test implements Executable{
         double b = 1.0;
         Integer A = a;
         int k = A.intValue();
+        if (k == 4) b = 2.0;
         scala.collection.mutable.Map<Var<Object>,Object> map = new scala.collection.mutable.HashMap<Var<Object>,Object>();
         Var<Object> var = new SimpleVar<Object>("x",1);
         map.update(var, 1);
@@ -40,4 +43,23 @@ public class Test implements Executable{
         Test test = new Test(null);
         System.out.println(test.execute(null));
     }
+
 }
+
+class UnboxTest implements UnboxedFrontlet {
+
+    public String name = "";
+
+    @Override
+    public Map<String, Object> toMap() {
+        return null;
+    }
+
+    @Override
+    public void fromMap(Map<String, Object> map) {
+        Option<Object> value = map.get("test");
+        if (value.isDefined()) name = (String) value.get();
+    }
+}
+
+

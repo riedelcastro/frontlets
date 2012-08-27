@@ -5,10 +5,11 @@ import org.apache.bcel.{Repository, Constants}
 import tools.nsc.util.ScalaClassLoader.URLClassLoader
 import java.net.URL
 import scala.collection
-import collection.mutable
+import collection.{MapLike, mutable}
 import collection.mutable.ArrayBuffer
-import org.riedelcastro.frontlets.{Frontlet, AbstractFrontlet}
+import org.riedelcastro.frontlets.{ImmutableFrontlet, Frontlet, AbstractFrontlet}
 import org.apache.bcel.verifier.Verifier
+import org.apache.bcel.classfile.JavaClass
 
 /**
  * @author riedelcastro
@@ -104,6 +105,7 @@ case class Const[+T](value: T) extends Term[T] {
   def prototype = value
 }
 
+
 case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]) extends Term[T] {
   def eval(state: State, eval: Eval) = eval(frontlet, (state)).map(slot(_).value)
 
@@ -180,6 +182,7 @@ object Compiler {
   val N_MMAP = classOf[scala.collection.mutable.Map[Any, Any]].getName
   val N_MAP = classOf[scala.collection.Map[Any, Any]].getName
   val N_EXE = classOf[Executable].getName
+  val N_UNBOXED_FRONTLET = classOf[UnboxedFrontlet].getName
   val N_STATE_OBJ = State.getClass.getName
   val N_EVAL_OBJ = Eval.getClass.getName
   val N_OPTION = classOf[Option[Any]].getName
@@ -193,6 +196,8 @@ object Compiler {
   val N_BOUND_VARIABLES = "boundVariables"
   val N_FREE_VARIABLES = "freeVariables"
   val N_INTEGER = classOf[java.lang.Integer].getName
+  val N_DOUBLE = classOf[java.lang.Double].getName
+  val N_BOOLEAN = classOf[java.lang.Boolean].getName
   val N_ARRAYBUFFER = classOf[ArrayBuffer[Any]].getName
 
 
@@ -207,10 +212,27 @@ object Compiler {
   val T_MAP = new ObjectType(N_MAP)
   val T_VAR = new ObjectType(N_VAR)
   val T_INTEGER = new ObjectType(N_INTEGER)
+  val T_DOUBLE = new ObjectType(N_DOUBLE)
+  val T_BOOLEAN = new ObjectType(N_BOOLEAN)
   val T_OPTION = new ObjectType(N_OPTION)
   val T_ARRAYBUFFER = new ObjectType(N_ARRAYBUFFER)
   val T_SEQ = new ObjectType(N_SEQ)
 
+  private val constructors = new mutable.HashMap[Class[AbstractFrontlet], () => AbstractFrontlet]()
+
+  def addConstructor[F <: AbstractFrontlet](clazz: Class[F], constructor: () => F) {
+    constructors(clazz.asInstanceOf[Class[AbstractFrontlet]]) = constructor
+  }
+
+  def constructorFor[F <: AbstractFrontlet](prototype: F): () => F = {
+    prototype match {
+      case i: ImmutableFrontlet[_] => () => i.construct().asInstanceOf[F]
+      case _ => constructors.get(prototype.getClass.asInstanceOf[Class[AbstractFrontlet]]) match {
+        case Some(constructor) => constructor.asInstanceOf[() => F]
+        case None => sys.error("No constructor defined for class %s, add one using addConstructor first.".format(prototype.getClass))
+      }
+    }
+  }
 
   class CompilationInfo(val info: ProgramInfo) {
     private var currentLocalVarIndex = 2
@@ -239,14 +261,165 @@ object Compiler {
   }
 
 
-  case class AccessPrototype(v: Var[AbstractFrontlet], proto: AbstractFrontlet) {
+  case class AccessPrototype(v: Term[AbstractFrontlet], proto: AbstractFrontlet) {
     def +(that: AccessPrototype) = copy(proto = proto += that.proto)
+  }
+
+  def appendMapGet(il: InstructionList, f: InstructionFactory, map: InstructionList => Unit, key: InstructionList => Unit) {
+    map(il)
+    key(il)
+    il.append(f.createInvoke(classOf[collection.MapLike[Any, Any, Any]].getName, "get", T_OPTION, Array(Type.OBJECT), INVOKEINTERFACE))
+  }
+
+  def unboxClassNameForFrontlet(proto: AbstractFrontlet) = {
+    val className = proto.getClass.getPackage.getName + ".unboxed." + proto.getClass.getSimpleName
+    //todo get unique representation for prototype
+    className
+  }
+
+  def unboxTypeForFrontlet(proto: AbstractFrontlet) = new ObjectType(unboxClassNameForFrontlet(proto))
+
+
+  case class UnboxedFrontletClassSpec[F <: AbstractFrontlet](proto: F, javaclass: JavaClass,
+                                                             constructor: () => F,
+                                                             clazz: Class[UnboxedFrontlet]) {
+    def unbox(f: F) = {
+      val unbox = clazz.newInstance()
+      unbox.fromMap(f.asMap)
+      unbox
+    }
+
+    def box(unboxed: UnboxedFrontlet) = {
+      val box = constructor()
+      box.setMap(unboxed.toMap)
+      box
+    }
+
+
+  }
+
+  def createUnboxedFrontletClass[F <: AbstractFrontlet](proto: F): UnboxedFrontletClassSpec[F] = {
+    val className = unboxClassNameForFrontlet(proto)
+    val cg = new ClassGen(className, "java.lang.Object",
+      "<generated>", ACC_PUBLIC | ACC_SUPER, Array(N_UNBOXED_FRONTLET))
+    cg.addEmptyConstructor(ACC_PUBLIC)
+    val cp = cg.getConstantPool
+    var localVarCount = 1
+    def allocateLocalVar = {
+      localVarCount += 1
+      localVarCount
+    }
+    //create fields
+    val asMap = proto.asMap
+    val fields = new mutable.HashMap[String, FieldGen]()
+    for ((key, value) <- asMap) {
+      value match {
+        case i: Int =>
+          val fieldGen = fields.getOrElseUpdate(key, new FieldGen(ACC_PUBLIC, Type.INT, key, cp))
+          //          fieldGen.setInitValue(i)
+          cg.addField(fieldGen.getField)
+        case s: String =>
+          val fieldGen = fields.getOrElseUpdate(key, new FieldGen(ACC_PUBLIC, Type.STRING, key, cp))
+          //          fieldGen.setInitValue(s)
+          cg.addField(fieldGen.getField)
+        case f: AbstractFrontlet =>
+          val fieldGen = fields.getOrElseUpdate(key, new FieldGen(ACC_PUBLIC, unboxTypeForFrontlet(f), key, cp))
+          cg.addField(fieldGen.getField)
+        case _ =>
+      }
+    }
+    //create fromMap method
+    {
+      val il = new InstructionList()
+      val f = new InstructionFactory(cg)
+      val mg = new MethodGen(ACC_PUBLIC, Type.VOID, Array[Type](T_MAP), Array("map"), "fromMap", className, il, cp)
+      for ((key, value) <- asMap) {
+        println("*****: " + value.getClass)
+        //get the actual input map
+        appendMapGet(il, f, _.append(new ALOAD(1)), _.append(f.createConstant(key)))
+        //get a local variable for it
+        val localIndex = allocateLocalVar
+        il.append(new ASTORE(localIndex))
+        il.append(new ALOAD(localIndex))
+        appendOptionIsDefined(il, f)
+        //if result is true / 0?
+        val ifeq = new IFEQ(null)
+        il.append(ifeq) //todo get the instruction handle for the next command
+        //add this object
+        il.append(new ALOAD(0))
+        //unbox if necessary
+        il.append(new ALOAD(localIndex))
+        appendOptionGet(il, f)
+        value match {
+          case i:Int => il.append(f.createCast(Type.OBJECT, T_INTEGER))
+          case _ =>
+        }
+        appendUnbox(new ObjectType(value.getClass.getName), il, f)
+        il.append(f.createPutField(className, key, fields(key).getType))
+        //in case the option is undefined we jump to this no-op step
+        il.append(new NOP) // this seems easier right now, but may be slow
+        ifeq.setTarget(il.getEnd)
+      }
+      il.append(new RETURN)
+      mg.setMaxLocals()
+      mg.setMaxStack()
+      cg.addMethod(mg.getMethod)
+    }
+    //create toMap method
+    {
+      val il = new InstructionList()
+      val f = new InstructionFactory(cg)
+      val mg = new MethodGen(ACC_PUBLIC, T_MAP, Array.empty, Array.empty, "toMap", className, il, cp)
+      //create map
+      appendCreateEmptyHashMap(il, f)
+      for ((key, value) <- asMap) {
+        //dup to get the map
+        il.append(new DUP())
+        //get the key
+        il.append(f.createConstant(key))
+        //get the unbox object
+        il.append(new ALOAD(0))
+        //get the actual value from the field
+        il.append(f.createGetField(className, key, fields(key).getType))
+        //box if necessary, this has to recursively box frontlets
+        appendBox(il, f, new ObjectType(value.getClass.getName))
+        //update the map
+        appendUpdateMap(il, f)
+      }
+      //return map
+      il.append(new ARETURN)
+
+      mg.setMaxLocals()
+      mg.setMaxStack()
+      cg.addMethod(mg.getMethod)
+    }
+    val javaClass = cg.getJavaClass
+    val loader = new ByteArrayClassLoader(Map(className -> javaClass.getBytes), Seq.empty, this.getClass.getClassLoader)
+    val unboxClass = loader.findClass(className).asInstanceOf[Class[UnboxedFrontlet]]
+    val constructor = constructorFor(proto)
+
+    for (method <- javaClass.getMethods) {
+      println(method)
+      println(method.getCode.toString)
+    }
+
+
+    Repository.addClass(javaClass)
+    Verifier.main(Array(className))
+
+    UnboxedFrontletClassSpec(proto, javaClass, constructor, unboxClass)
+  }
+
+
+  def appendOptionIsDefined[F <: AbstractFrontlet](il: InstructionList, f: InstructionFactory) {
+    il.append(f.createInvoke(N_OPTION, "isDefined", Type.BOOLEAN, Array.empty, INVOKEVIRTUAL))
   }
 
   def accessPrototype(term: Term[Any]): Option[AccessPrototype] = {
     term match {
       case Get(f, s) => for (a <- accessPrototype(f)) yield a.copy(proto = s(a.proto).setToDefault())
       case v@FrontletVar(name, constructor) => Some(AccessPrototype(v, constructor()))
+      case c@Const(f: AbstractFrontlet) => Some(AccessPrototype(c.asInstanceOf[Const[AbstractFrontlet]], f))
       case _ => None
     }
   }
@@ -402,9 +575,9 @@ object Compiler {
       appendVariable(il, f, free, N_FREE_VARIABLES, compilationInfo.free2InfoIndex(free))
       //call state.apply to get value
       il.append(f.createInvoke(N_STATE, "get", T_OPTION, Array(T_VAR), INVOKEINTERFACE))
-      il.append(f.createInvoke(N_OPTION, "get", Type.OBJECT, Array.empty, INVOKEVIRTUAL))
+      appendOptionGet(il, f)
       //unbox if necessary
-      il.append(f.createCast(Type.OBJECT,termToObjectType(free)))
+      il.append(f.createCast(Type.OBJECT, termToObjectType(free)))
       appendUnbox(termToObjectType(free), il, f)
       //store as local variable
       appendStoreUnboxedAsLocalVariable(il, f, free)
@@ -563,6 +736,10 @@ object Compiler {
   }
 
 
+  def appendOptionGet(il: InstructionList, f: InstructionFactory) {
+    il.append(f.createInvoke(N_OPTION, "get", Type.OBJECT, Array.empty, INVOKEVIRTUAL))
+  }
+
   def appendUnbox[T](resultType: ObjectType, il: InstructionList, f: InstructionFactory) {
     resultType match {
       case t if (t == T_INTEGER) => appendUnboxInteger(il, f)
@@ -582,13 +759,34 @@ object Compiler {
     target match {
       case t if (t == T_INTEGER) =>
         il.append(f.createInvoke(N_INTEGER, "valueOf", T_INTEGER, Array(Type.INT), INVOKESTATIC))
+      case t if (t == T_DOUBLE) =>
+        il.append(f.createInvoke(N_DOUBLE, "valueOf", T_DOUBLE, Array(Type.DOUBLE), INVOKESTATIC))
+      case t if (t == T_BOOLEAN) =>
+        il.append(f.createInvoke(N_BOOLEAN, "valueOf", T_BOOLEAN, Array(Type.BOOLEAN), INVOKESTATIC))
       case _ =>
+    }
+  }
+
+  def appendBox(il: InstructionList, f: InstructionFactory, prototype: Any) {
+    prototype match {
+      case f: AbstractFrontlet =>
+      //call toMap on unboxed frontlet
+      //create frontlet and set map
+      case o => appendBox(il, f, new ObjectType(o.getClass.getName))
     }
   }
 
 
   def appendUnboxInteger(il: InstructionList, f: InstructionFactory) {
     il.append(f.createInvoke(N_INTEGER, "intValue", Type.INT, Array.empty, INVOKEVIRTUAL))
+  }
+
+  def appendUnboxDouble(il: InstructionList, f: InstructionFactory) {
+    il.append(f.createInvoke(classOf[java.lang.Double].getName, "doubleValue", Type.DOUBLE, Array.empty, INVOKEVIRTUAL))
+  }
+
+  def appendUnboxBoolean(il: InstructionList, f: InstructionFactory) {
+    il.append(f.createInvoke(classOf[java.lang.Boolean].getName, "booleanValue", Type.BOOLEAN, Array.empty, INVOKEVIRTUAL))
   }
 
   def appendGetProgramInfo(il: InstructionList, f: InstructionFactory) {
@@ -610,15 +808,11 @@ object Compiler {
     val y = SimpleVar("y", 0)
     val z = FrontletVar("z", () => new Person)
     val u = FrontletVar("u", () => new Person)
-    def Person = Const(new Person)
-    val program = Program(Seq(
-      y := x,
-      z := Person(_.spouse, Person(_.age, y))(_.age, u(_.age))
-    ))
     val simpleProgram = Program(Seq(
       x := Const(5) + i,
       y := Const(new Person().age(35))(_.age, i)(_.age)
     ))
+
 
     val exe = compile(simpleProgram)
     val result = exe.execute(State(Map(i -> 3)))
@@ -627,10 +821,20 @@ object Compiler {
     println("y: " + result.get(y))
     println("z: " + result.get(z))
 
-    //    for (term <- Person(_.spouse, Person(_.age, y))(_.age, u(_.age)).all) {
-    //      println("%-20s %s".format(term, accessPrototype(term)))
-    //    }
+    addConstructor(classOf[Person], () => new Person)
+    val person = new Person().age(36)
+    val unboxClass = createUnboxedFrontletClass(person)
+    val unboxed = unboxClass.unbox(new Person().age(100))
+    val boxed = unboxClass.box(unboxed)
+    println(boxed)
+
   }
+}
+
+trait UnboxedFrontlet {
+  def toMap: collection.Map[String, Any]
+
+  def fromMap(map: collection.Map[String, Any])
 }
 
 trait Executable {
