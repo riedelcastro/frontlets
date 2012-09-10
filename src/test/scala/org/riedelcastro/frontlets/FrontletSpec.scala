@@ -103,7 +103,4 @@ class FrontletSpec extends FunSpec with MustMatchers{
   }
 
 
-
-
-
 }

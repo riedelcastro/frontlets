@@ -150,6 +150,11 @@ trait FrontletJacksonMapper {
   def readValue[T: Manifest](src: InputStream): T = mapper.readValue(src, resolve)
   def readValue[T: Manifest](src: Reader): T      = mapper.readValue(src, resolve)
   def readValue[T: Manifest](src: String): T      = mapper.readValue(src, resolve)
+  def readValue[T: Manifest](src: JsonParser): T  = mapper.readValue(src, resolve)
+
+
+  def readValues[T: Manifest](src: InputStream): MappingIterator[T] = mapper.readValues(mapper.getJsonFactory.createJsonParser(src), resolve)
+
 
   def writeValue(w: Writer, v: Any)         { mapper.writeValue(w, v) }
   def writeValue(o: OutputStream, v: Any)   { mapper.writeValue(o, v) }

@@ -75,7 +75,7 @@ class MongoFrontletConverterSpec extends FunSpec with MustMatchers with MockitoS
       val frontlet = MongoFrontletConverter.lazyFrontlet(addressDBO, () => new Address)
       verify(addressDBO, never()).get("number")
       val number = frontlet.number()
-      verify(addressDBO, times(1))
+      verify(addressDBO, times(1)).get("number")
       number must be(2)
     }
   }
