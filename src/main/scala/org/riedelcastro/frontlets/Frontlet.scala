@@ -103,6 +103,7 @@ trait AbstractFrontlet {
 
   }
 
+
   /**
    * Every frontlet has an ID. This ID is itself a field of the underlying map, and hence
    * can also be accessed through a slot.
@@ -387,7 +388,6 @@ trait AbstractFrontlet {
     def default = Seq(constructor())
 
   }
-
 
   /**
    * A RefSlot is a simple type of AbstractInverseSlot which "contains" all frontlets

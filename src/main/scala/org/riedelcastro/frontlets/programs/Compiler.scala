@@ -500,7 +500,7 @@ object Compiler {
           case (true, false) => sys.error("Variable should not be bound twice")
           case (false, false) => bound += variable
         }
-        for (v <- term.all.collect({ case v: Var[Any] => v })) bound(v) match {
+        for (v <- term.all.collect({ case v: Var[_] => v })) bound(v) match {
           case false => free += v
           case true => if (v == variable) sys.error("Can't use recursion in assignment of variable")
         }
