@@ -15,10 +15,14 @@ trait AbstractFrontlet {
   type GenericMap = collection.Map[String, Any]
 
   def assign(key: String, value: Any): FrontletType
+  def assignTransient(key: String, value: Any): FrontletType
+
 
   def self: FrontletType
 
   def get(key: String): Option[Any]
+  def getTransient(key: String): Option[Any]
+
 
   def setMap(map: GenericMap): FrontletType
 
@@ -263,6 +267,13 @@ trait AbstractFrontlet {
 
   abstract class Slot[T](val name: String) extends BasicSlot[T]
 
+  case class TransientSlot[T](override val name:String, init: ()=>T) extends Slot[T](name) {
+
+    def :=(value: T) = assignTransient(name,value)
+    def opt = getTransient(name).asInstanceOf[Option[T]]
+    def default = init()
+  }
+
   /**
    * A slot containing primitive values (ints, strings, booleans etc.).
    * @param n the name of this slot.
@@ -297,6 +308,8 @@ trait AbstractFrontlet {
   case class DateSlot(override val name: String) extends PrimitiveSlot[java.util.Date](name) {
     def default = new java.util.Date
   }
+
+
 
   /**
    * A slot containing a list of primitives.
@@ -509,6 +522,8 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
   type MapType = Map[String, Any]
 
   private var map: MapType = Map.empty
+  private var mapTransient: MapType = Map.empty
+
 
   def construct(): F
 
@@ -517,11 +532,13 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
   def create(map: MapType) = {
     val f = construct()
     f.map = map
+    f.mapTransient = mapTransient
     f
   }
-  def create(map: GenericMap) = {
+  def create(map: GenericMap, mapTransient:GenericMap = Map.empty) = {
     val f = construct()
     f.map = Map.empty ++ map
+    f.mapTransient = Map.empty ++ mapTransient
     f
   }
 
@@ -529,6 +546,11 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
     create(map + (key -> value))
   }
 
+  def assignTransient(key: String, value: Any) = {
+    create(Map.empty, mapTransient + (key -> value))
+  }
+
+  def getTransient(key: String) = mapTransient.get(key)
   def get(key: String) = map.get(key)
 
   def asMap = map
@@ -555,12 +577,22 @@ abstract class OuterFrontlet[F <: OuterFrontlet[F]] extends ImmutableFrontlet[F]
 class Frontlet extends AbstractFrontlet {
   type MapType = mutable.Map[String, Any]
   private var map: MapType = new mutable.HashMap[String, Any]
+  private var mapTransient: MapType = new mutable.HashMap[String, Any]
+
   type FrontletType = this.type
 
   def assign(key: String, value: Any) = {
     map(key) = value
     this
   }
+
+
+  def assignTransient(key: String, value: Any) = {
+    mapTransient(key) = value
+    this
+  }
+
+  def getTransient(key: String) = mapTransient.get(key)
 
   def get(key: String) = map.get(key)
 
