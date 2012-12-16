@@ -76,7 +76,7 @@ class FrontletSpec extends FunSpec with MustMatchers{
     it("should access frontlets in a sequence using a position-based constructor") {
       class Item extends Frontlet {
         val index = IntSlot("index")
-        val container = TransientSlot("container", () => new Container)
+        val container = TransientSlot[Container]("container")
       }
       class Container extends Frontlet {
         val items = FrontletSeqSlot("items", i => new Item().index(i).container(this))

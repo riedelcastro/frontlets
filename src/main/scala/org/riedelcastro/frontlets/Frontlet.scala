@@ -269,11 +269,11 @@ trait AbstractFrontlet {
 
   abstract class Slot[T](val name: String) extends BasicSlot[T]
 
-  case class TransientSlot[T](override val name:String, init: ()=>T) extends Slot[T](name) {
+  case class TransientSlot[T](override val name:String) extends Slot[T](name) {
 
     def :=(value: T) = assignTransient(name,value)
     def opt = getTransient(name).asInstanceOf[Option[T]]
-    def default = init()
+    def default = value
   }
 
   /**
