@@ -556,7 +556,7 @@ abstract class ImmutableFrontlet[F <: ImmutableFrontlet[F]] extends AbstractFron
   }
 
   def assignTransient(key: String, value: Any) = {
-    create(Map.empty, mapTransient + (key -> value))
+    create(map, mapTransient + (key -> value))
   }
 
   def getTransient(key: String) = mapTransient.get(key)
