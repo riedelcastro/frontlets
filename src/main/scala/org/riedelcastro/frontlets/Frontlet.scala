@@ -219,6 +219,8 @@ trait AbstractFrontlet {
 
     def opt: Option[T]
 
+    def foreach[U](f:T=>U) {opt.foreach(f)}
+
     /**
      * Set a raw value into the underlying map. Should generally only be used
      * in other library code.
