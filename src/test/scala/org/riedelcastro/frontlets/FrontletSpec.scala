@@ -70,7 +70,7 @@ class FrontletSpec extends FunSpec with MustMatchers{
       def job1 = new Job().title("researcher").company("UMass")
       def job2 = new Job().title("lecturer").company("UCL")
       person.experience := Seq(job1,job2)
-      person.experience().map(_.title("worker")) must be (Seq(job1.title("worker"),job2.title("worker")))
+      person.experience.map(_.title("worker")).experience() must be (Seq(job1.title("worker"),job2.title("worker")))
     }
 
     it("should access frontlets in a sequence using a position-based constructor") {

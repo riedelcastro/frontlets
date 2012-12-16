@@ -498,7 +498,7 @@ trait AbstractFrontlet {
      * @param f the function to apply to the created frontlet
      * @return the modified frontlet.
      */
-    def create(f: A => A = identity(_)): FrontletType = {
+    def map(f: A => A = identity(_)): FrontletType = {
       this := f(constructor())
     }
     /**
