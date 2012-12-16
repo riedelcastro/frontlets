@@ -65,6 +65,14 @@ class FrontletSpec extends FunSpec with MustMatchers{
       person.experience() must be (Seq(job1,job2))
     }
 
+    it("should map list values") {
+      val person = new Person()
+      def job1 = new Job().title("researcher").company("UMass")
+      def job2 = new Job().title("lecturer").company("UCL")
+      person.experience := Seq(job1,job2)
+      person.experience().map(_.title("worker")) must be (Seq(job1.title("worker"),job2.title("worker")))
+    }
+
     it("should access frontlets in a sequence using a position-based constructor") {
       class Item extends Frontlet {
         val index = IntSlot("index")

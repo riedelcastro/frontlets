@@ -363,6 +363,10 @@ trait AbstractFrontlet {
     }
 
     def default = Seq(construct(0))
+
+    def map(f:A=>A):FrontletType = {
+      assign(name,value.map(f(_).asMap))
+    }
   }
 
   /**
