@@ -347,8 +347,14 @@ trait AbstractFrontlet {
     def default = Seq("")
   }
 
+  trait FrontletIterableSlot[F<:AbstractFrontlet,C <: Iterable[F]] extends AbstractSlot[C] {
+    def map(f:F=>F):FrontletType = {
+      assign(name,value.map(f(_).asMap))
+    }
+  }
+
   case class FrontletSeqSlot[A <: AbstractFrontlet](override val name: String, construct: Int => A)
-    extends Slot[Seq[A]](name) {
+    extends Slot[Seq[A]](name) with FrontletIterableSlot[A,Seq[A]] {
 
     def opt = get(name) match {
       case Some(s: Seq[_]) =>
@@ -364,9 +370,6 @@ trait AbstractFrontlet {
 
     def default = Seq(construct(0))
 
-    def map(f:A=>A):FrontletType = {
-      assign(name,value.map(f(_).asMap))
-    }
   }
 
   /**
@@ -377,7 +380,7 @@ trait AbstractFrontlet {
    * @tparam A the type of the frontlets in the list.
    */
   case class FrontletListSlot[A <: AbstractFrontlet](override val name: String, constructor: () => A)
-    extends Slot[Seq[A]](name) {
+    extends Slot[Seq[A]](name) with FrontletIterableSlot[A,Seq[A]] {
 
     /**
      * Returns the list of frontlets in this slot. The underlying map is expected to
