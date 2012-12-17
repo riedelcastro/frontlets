@@ -107,7 +107,9 @@ case class Const[+T](value: T) extends Term[T] {
 
 
 case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]) extends Term[T] {
-  def eval(state: State, eval: Eval) = eval(frontlet, (state)).map(slot(_).value)
+  def eval(state: State, eval: Eval) = {
+    eval(frontlet, (state)).map(slot(_).value)
+  }
 
   override def children = Seq(frontlet)
 
@@ -116,7 +118,9 @@ case class Get[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T]
 
 case class Set[F <: AbstractFrontlet, T](frontlet: Term[F], slot: F => F#Slot[T], value: Term[T])
   extends FrontletTerm[F#FrontletType] {
-  def eval(state: State, eval: Eval) = for (f <- frontlet.eval(state); v <- eval(value, state)) yield slot(f) := v
+  def eval(state: State, eval: Eval) = {
+    for (f <- eval(frontlet,state); v <- eval(value, state)) yield slot(f) := v
+  }
 
   override def children = Seq(frontlet, value)
 
@@ -418,6 +422,7 @@ object Compiler {
   def accessPrototype(term: Term[Any]): Option[AccessPrototype] = {
     term match {
       case Get(f, s) => for (a <- accessPrototype(f)) yield a.copy(proto = s(a.proto).setToDefault())
+      case Set(f, s, v) => for (a <- accessPrototype(f)) yield a.copy(proto = s(a.proto).setToDefault())
       case v@FrontletVar(name, constructor) => Some(AccessPrototype(v, constructor()))
       case c@Const(f: AbstractFrontlet) => Some(AccessPrototype(c.asInstanceOf[Const[AbstractFrontlet]], f))
       case _ => None
@@ -813,6 +818,9 @@ object Compiler {
       y := Const(new Person().age(35))(_.age, i)(_.age)
     ))
 
+    //
+
+
 
     val exe = compile(simpleProgram)
     val result = exe.execute(State(Map(i -> 3)))
@@ -858,5 +866,20 @@ class PersonTest {
   def this(j: Int) {
     this()
     i = j
+  }
+}
+
+object TestBuilder {
+  def main(args: Array[String]) {
+    import TermImplicits._
+
+    val z = FrontletVar("z",() => new Person)
+    val u = FrontletVar("u",() => new Person)
+    val i = SimpleVar("i",0)
+    val spouse = new Person().age(35)
+    val builder = Program(Seq(
+      z := u(_.age,20)(_.spouse,spouse)
+    ))
+    println(Compiler.compile(builder).execute(State(Map(u -> new Person))).get(z))
   }
 }
