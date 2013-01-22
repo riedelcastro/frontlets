@@ -16,6 +16,10 @@ object GraphLoader {
   //Map from (frontlet class, attribute name, value) to the frontlets of that class with that attribute value
   type Index = GenericMap[(Class[AbstractFrontlet], String, Any), Iterable[AbstractFrontlet]]
 
+  class FrontletGraph(val index:Index) {
+    lazy val refs = GraphLoader.toRefs(index)
+  }
+
   /**
    * Loads a cache from ids to frontlets based on the root objects and a neighborhood function.
    * @param roots the frontlets to start with.
@@ -74,6 +78,10 @@ object GraphLoader {
   case class InvSlotInCollection[+R <: AbstractFrontlet](invSlot: AbstractFrontlet#AbstractInverseSlot[R],
                                                          coll: AbstractFrontletCollection[R])
 
+
+  def loadGraph(roots: TraversableOnce[AbstractFrontlet],
+                neighbors: PartialFunction[AbstractFrontlet, Seq[InvSlotInCollection[AbstractFrontlet]]],
+                maxDepth: Int = Int.MaxValue): FrontletGraph = new FrontletGraph(load2(roots,neighbors,maxDepth))
 
   //
   @tailrec

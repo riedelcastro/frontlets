@@ -39,4 +39,9 @@ object FrontletIO {
     maps.map(constructor().setMap(_))
   }
 
+  def printToJSONFile[F<:AbstractFrontlet](out:PrintStream, frontlets:TraversableOnce[F]) = {
+    for (f <- frontlets) out.println(f.toJSON)
+  }
+
+
 }

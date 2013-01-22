@@ -493,7 +493,7 @@ class MongoSlot[C <: AbstractFrontlet, V](val slot: C#BasicSlot[V]) {
 
 
 class MongoRefSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](val slot: C#AbstractRefSlot[A]) {
-  def in(coll: MongoFrontletCollection[A]): GraphLoader.SlotInCollection[A] = GraphLoader.SlotInCollection(slot, coll)
+  def in2(coll: MongoFrontletCollection[A]): GraphLoader.SlotInCollection[A] = GraphLoader.SlotInCollection(slot, coll)
 
 }
 
@@ -518,7 +518,7 @@ class MongoPrimitiveListSlot[C <: AbstractFrontlet, A](val slot: C#PrimitiveList
 
 
 class MongoInvSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](val slot: C#AbstractInverseSlot[A]) {
-  def of(coll: MongoFrontletCollection[A]): GraphLoader.InvSlotInCollection[A] =
+  def in(coll: MongoFrontletCollection[A]): GraphLoader.InvSlotInCollection[A] =
     GraphLoader.InvSlotInCollection(slot, coll)
 }
 

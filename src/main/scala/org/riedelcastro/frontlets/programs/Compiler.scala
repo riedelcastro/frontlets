@@ -16,9 +16,13 @@ import org.apache.bcel.classfile.JavaClass
  */
 trait State {
   def get[T](variable: Var[T]): Option[T]
+  def apply[T](variable: Var[T]) = get(variable).get
 }
 
 object State {
+
+  val empty = apply(Map.empty)
+
   def apply(map: collection.Map[Var[Any], Any]): State = new State {
     def get[T](variable: Var[T]) = map.get(variable).map(_.asInstanceOf[T])
   }
@@ -878,7 +882,7 @@ object TestBuilder {
     val i = SimpleVar("i",0)
     val spouse = new Person().age(35)
     val builder = Program(Seq(
-      z := u(_.age,20)(_.spouse,spouse)
+      z := u(_.age,20)(_.spouse,spouse)(_.spouse)
     ))
     println(Compiler.compile(builder).execute(State(Map(u -> new Person))).get(z))
   }

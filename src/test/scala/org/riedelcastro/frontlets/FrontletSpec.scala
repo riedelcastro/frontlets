@@ -90,7 +90,6 @@ class FrontletSpec extends FunSpec with MustMatchers{
       }
     }
 
-
     it("should load and write json strings") {
       val person1 = new Person().age(36).address(_.number(1).street("Broadway")).hobbies(Seq("ping-pong"))
       val json1 = person1.toJSON
@@ -99,6 +98,15 @@ class FrontletSpec extends FunSpec with MustMatchers{
       val json2 = person2.toJSON
       json1 must be (json2)
     }
+
+    it("should provide access to lists of lists of lists") {
+      class Container extends Frontlet {
+        val list = GenericListSlot("list", Seq(Seq(Seq(1.0))))
+      }
+      val c = new Container().setJSON("""{"list": [[[1.0,2.0]]] }""")
+      c.list() must be (Seq(Seq(Seq(1.0,2.0))))
+    }
+
   }
 
   describe("An immutable Frontlet") {

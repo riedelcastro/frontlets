@@ -110,7 +110,7 @@ object FrontletMongoTest {
     //the graph loader loads a graph rooted around "james" by incrementally and recursively instantiating
     //the spouse of every person in the graph.
     implicit val refs = GraphLoader.load(Seq(james), {
-      case p: Person => Seq(p.spouse in persons)
+      case p: Person => Seq(p.spouse in2 persons)
     })
 
     //the calls below use the implicit refs object returned by the graph loader to do dereferencing.
@@ -120,20 +120,24 @@ object FrontletMongoTest {
     println(james.spouse.deref.spouse.deref)
 
     //same as above, but with both inverse and ref slots.
-    val index = GraphLoader.load2(Seq(kid), {
-      case p: Person => Seq(p.children of persons, p.father of persons)
+    implicit val graph = GraphLoader.loadGraph(Seq(kid), {
+      case p: Person => Seq(p.children in persons, p.father in persons)
     })
 
     println("Index:")
-    println(index)
-    println(james.children.value2(index))
+    println(graph)
+    println(james.children.value2(graph.index))
+    println(james.children.*)
+    println(kid.father.*)
+
+
     //ref slots need a Refs object (mapping from IDs to frontlets) and inv slots an inverter.
-    println(james.children.value(GraphLoader.toInverter(index)))
-    println(kid.father.deref(GraphLoader.toRefs(index)))
+    println(james.children.value(GraphLoader.toInverter(graph.index)))
+    println(kid.father.deref(graph.refs))
 
     println("Test Index 2")
     val index2 = GraphLoader.load2(Seq(james), {
-      case p: Person => Seq(p.children of persons)
+      case p: Person => Seq(p.children in persons)
     })
     println(james.children.value(GraphLoader.toInverter(index2)))
     println(kid.father.deref(GraphLoader.toRefs(index2)))

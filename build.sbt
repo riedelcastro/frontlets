@@ -23,7 +23,7 @@ scalacOptions ++= Seq("-unchecked","-deprecation")
 // Add multiple dependencies
 libraryDependencies ++= Seq(
      "com.lambdaworks" % "jacks" % "2.0.4",
-     "org.mongodb" % "mongo-java-driver" % "2.8.0",
+     "org.mongodb" % "mongo-java-driver" % "2.10.1",
      "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT",
      "org.scalatest" %% "scalatest" % "1.8" % "test",
      "org.mockito" % "mockito-all" % "1.9.0" % "test",

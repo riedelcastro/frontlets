@@ -189,6 +189,9 @@ trait AbstractFrontlet {
       cache((foreignFrontlet.frontletClass, foreignSlot.name, frontlet.id)).asInstanceOf[Iterable[A]]
     }
 
+    def *(implicit graph:GraphLoader.FrontletGraph) = value2(graph.index)
+
+
     def foreignSlot = (c: AbstractFrontlet) => slot(c.asInstanceOf[A])
 
     def target = Some(frontlet.id)
@@ -329,8 +332,10 @@ trait AbstractFrontlet {
 
     def :=(value: Seq[A]) = assign(name, value)
 
+  }
 
-
+  case class GenericListSlot[A](override val name: String, defaultElem:A) extends PrimitiveListSlot[A](name) {
+    def default = Seq(defaultElem)
   }
 
   case class IntListSlot(override val name: String) extends PrimitiveListSlot[Int](name) {
@@ -465,6 +470,10 @@ trait AbstractFrontlet {
      * @return the object associated with the given id in the given mapping.
      */
     def deref(implicit tr: scala.collection.Map[Any, AbstractFrontlet]) = tr(value).asInstanceOf[A]
+
+
+    def *(implicit graph: GraphLoader.FrontletGraph) = deref(graph.refs)
+
 
     //    def ->(coll:MongoFrontletCollection[A]):GraphLoader.SlotInCollection[A] = GraphLoader.SlotInCollection(this,coll)
   }
