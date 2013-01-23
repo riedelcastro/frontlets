@@ -87,8 +87,9 @@ class Node extends Frontlet {
 It uses a `RefSlot` which can point to any other node, and the corresponding `InverseSlot`, which
 indicates that for each node there may be other nodes that have it as `parent`. The inverse children slot
 does not store anything (by design it should not even cache any collection of children). However,
-it can be used with a graph loading routine that generates cache objects which the reference and inverse slots
-in turn can use as implicit parameters:
+it can be used with a graph loading routine that instantiates a graph of frontlets and their relations.
+This graph, when declared as implicit, will then be used in the "dereference" * calls to the inverse
+and reference slots:
 
 ```scala
 //a mongo collection of nodes
