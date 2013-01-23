@@ -26,7 +26,7 @@ println(person.name())
 println(person.age())
 ```
 
-All slot values are stored in, and retrieved from, an underlying mutable scala map, in this case `person._map`.
+All slot values are stored in, and retrieved from, an underlying mutable (or immutable, see below) scala map, in this case `person._map`.
 This map can come from anywhere: json results of a web-service, bson query results of a mongo database etc. In these
 cases frontlets give clients typed and concise access to the underlying raw map.
 
@@ -35,7 +35,7 @@ A good place for further information is the [spec][spec].
 ### Mongo Support ###
 
 Frontlets particularly shine in combination with document-based nosql databases such as mongodb. You can
-wrap frontlets around BSON objects retrieved from mongo databases. The frontlet library alos provides
+wrap frontlets around BSON objects retrieved from mongo databases. The frontlet library also provides
 mongo collection wrappers that provide a powerful *typed* query interface close to the original raw
 collection interface. This gives you succinct and typesafe queries while you can still fully
 utilize the flexibility and power of mongo (without being at the mercy of magic object persistence frameworks).
