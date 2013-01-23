@@ -123,9 +123,9 @@ changed.age() must be (36)
 One of the perks of working with immutable frontlets is their support for manipulating nested immutable objects:
 
 ```scala
-  val person = new ImmutablePerson().age(18).address.create(_.street("Broadway"))
-  val changed = person.address(_.street("Brick Lane"))
-  changed must be (new ImmutablePerson().age(18).address.create(_.street("Brick Lane")))
+val person = new ImmutablePerson().age(18).address.create(_.street("Broadway"))
+val changed = person.address(_.street("Brick Lane"))
+changed must be (new ImmutablePerson().age(18).address.create(_.street("Brick Lane")))
 ```
 Note that the second line creates new person "tree" in which the address "subtree" is replaced with a
 new address containing a different street. For another way to deal with the problem of manipulating nested
