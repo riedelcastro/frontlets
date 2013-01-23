@@ -120,6 +120,18 @@ person.age() must be (18)
 changed.age() must be (36)
 ```
 
+One of the perks of working with immutable frontlets is their support for manipulating nested immutable objects:
+
+```scala
+  val person = new ImmutablePerson().age(18).address.create(_.street("Broadway"))
+  val changed = person.address(_.street("Brick Lane"))
+  changed must be (new ImmutablePerson().age(18).address.create(_.street("Brick Lane")))
+```
+Note that the second line creates new person "tree" in which the address "subtree" is replaced with a
+new address containing a different street. For another way to deal with the problem of manipulating nested
+immutable objects, see [zippers][zippers].
+
+
 Installation
 ------------
 You can use frontlets as a sbt dependency
@@ -140,3 +152,4 @@ License
 Frontlets are licensed under [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
 
 [spec]: https://github.com/riedelcastro/frontlets/blob/master/src/test/scala/org/riedelcastro/frontlets/FrontletSpec.scala
+[zippers]: http://scienceblogs.com/goodmath/2010/01/13/zippers-making-functional-upda/

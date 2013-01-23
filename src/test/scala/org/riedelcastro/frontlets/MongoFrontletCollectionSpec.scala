@@ -19,7 +19,7 @@ class MongoFrontletCollectionSpec extends FunSpec with MustMatchers with Mockito
     it("should translate frontlet insert into a corresponding mongo dbo insert") {
       val mockColl = mock[DBCollection]
       val coll = new MongoFrontletCollection(mockColl, () => new Person)
-      val person = new Person().age(36).address.map(_.street("Broadway").number(1))
+      val person = new Person().age(36).address.create(_.street("Broadway").number(1))
       val addressDBO = new BasicDBObject(Map("street" -> "Broadway", "number" -> 1))
       val personDBO = new BasicDBObject(Map("age" -> 36, "address" -> addressDBO))
       coll += person

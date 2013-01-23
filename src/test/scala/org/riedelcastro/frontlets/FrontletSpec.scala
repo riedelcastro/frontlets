@@ -116,6 +116,13 @@ class FrontletSpec extends FunSpec with MustMatchers{
       person.age() must be (18)
       changed.age() must be (36)
     }
+
+    it("should support nested changes") {
+      val person = new ImmutablePerson().age(18).address.create(_.street("Broadway"))
+      val changed = person.address(_.street("Brick Lane"))
+      changed must be (new ImmutablePerson().age(18).address.create(_.street("Brick Lane")))
+    }
+
   }
 
 
