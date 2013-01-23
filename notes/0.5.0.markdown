@@ -1,0 +1,4 @@
+Changes:
+
+* More README documentation
+* More Spec coverage

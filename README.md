@@ -94,16 +94,17 @@ and reference slots:
 ```scala
 //a mongo collection of nodes
 val data = MongoFrontletCollection(coll, () => new Node)
+val Seq(first,second) = data.take(2).toSeq
 
 //find all nodes starting from the two given example nodes, and using the given neighborhood function
 //this graph will be implicitly used in all ref slots and inverse slots when calling "*" methods
-implicit val graph = GraphLoader.loadGraph(Seq(someNode,anotherNode), {
+implicit val graph = GraphLoader.loadGraph(Seq(first,second), {
   case N: Node => Seq(p.children in data, p.parent in data)})
 
 //the following calls actually use the above cache objects, and return the neighbor of the given object
 //as stored in the graph.
-println(someNodeInTheGraph.parent.*)
-println(someNodeInTheGraph.children.*)
+println(first.parent.*)
+println(first.children.*)
 ```
 
 ### Immutable Frontlets ###
