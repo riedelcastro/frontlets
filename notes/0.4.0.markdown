@@ -1,0 +1,1 @@
+This version brings a few refactorings under the hood, some bug fixes, and some additional types of slots.

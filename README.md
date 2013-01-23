@@ -92,20 +92,17 @@ in turn can use as implicit parameters:
 
 ```scala
 //a mongo collection of nodes
-val graph = MongoFrontletCollection(coll, () => new Node)
+val data = MongoFrontletCollection(coll, () => new Node)
 
 //find all nodes starting from the two given example nodes, and using the given neighborhood function
-val result = GraphLoader.load2(Seq(someNodeInTheGraph,anotherNode), {
+//this graph will be implicitly used in all ref slots and inverse slots when calling "*" methods
+implicit val graph = GraphLoader.loadGraph(Seq(someNode,anotherNode), {
   case N: Node => Seq(p.children of graph, p.parent of graph)})
 
-//convert results to implicit cache objects that can be used in ref and inverse slots.
-implicit val inverter = GraphLoader.toInverter(result)
-implicit val index = GraphLoader.toRefs(result)
-
 //the following calls actually use the above cache objects, and return the neighbor of the given object
-//as stored in the graph and returned by the load2 method.
-println(someNodeInTheGraph.parent.deref)
-println(someNodeInTheGraph.children.value)
+//as stored in the graph.
+println(someNodeInTheGraph.parent.*)
+println(someNodeInTheGraph.children.*)
 ```
 
 Installation
