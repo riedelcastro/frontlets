@@ -105,6 +105,20 @@ println(someNodeInTheGraph.parent.*)
 println(someNodeInTheGraph.children.*)
 ```
 
+### Immutable Frontlets ###
+
+You can use frontlets also in a immutable mode:
+
+```scala
+class ImmutablePerson extends OuterFrontlet[ImmutablePerson] {
+  val age = IntSlot("age")
+}
+val person = new ImmutablePerson().age(18)
+val changed = person.age := 36
+person.age() must be (18)
+changed.age() must be (36)
+```
+
 Installation
 ------------
 You can use frontlets as a sbt dependency
