@@ -97,7 +97,7 @@ val data = MongoFrontletCollection(coll, () => new Node)
 //find all nodes starting from the two given example nodes, and using the given neighborhood function
 //this graph will be implicitly used in all ref slots and inverse slots when calling "*" methods
 implicit val graph = GraphLoader.loadGraph(Seq(someNode,anotherNode), {
-  case N: Node => Seq(p.children of graph, p.parent of graph)})
+  case N: Node => Seq(p.children in data, p.parent in data)})
 
 //the following calls actually use the above cache objects, and return the neighbor of the given object
 //as stored in the graph.
