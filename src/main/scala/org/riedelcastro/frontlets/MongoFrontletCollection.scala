@@ -95,6 +95,34 @@ trait MutableFrontletCollection[C <: AbstractFrontlet] extends AbstractFrontletC
 }
 
 /**
+ * General Mongo Index
+ */
+trait MongoIndex {
+  def ensureIndex(coll:DBCollection)
+}
+
+object MongoIndex {
+  def apply(paths:SlotPath*) = SimpleIndex(paths.toSeq)
+}
+
+case class SimpleIndex(paths:Seq[SlotPath]) extends MongoIndex {
+  def ensureIndex(coll: DBCollection) {
+    val dbo = new BasicDBObject()
+    for (path <- paths) {
+      dbo.put(path.toPathString, 1)
+    }
+    coll.ensureIndex(dbo)
+  }
+}
+
+case class Index2D(path:SlotPath) extends MongoIndex {
+  def ensureIndex(coll: DBCollection) {
+    val dbo = new BasicDBObject(path.toPathString,"2d")
+    coll.ensureIndex(dbo)
+  }
+}
+
+/**
  * A MongoFrontletCollection stores frontlets in a Mongo collection.
  *
  * @param coll the mongo collection that will be used to store the frontlets.
@@ -106,7 +134,7 @@ trait MutableFrontletCollection[C <: AbstractFrontlet] extends AbstractFrontletC
  */
 class MongoFrontletCollection[C <: AbstractFrontlet](val coll: DBCollection,
                                                      val constructor: () => C,
-                                                     val indices: C => Seq[Seq[C#AbstractSlot[Any]]] = (c: C) => Seq.empty[Seq[C#AbstractSlot[Any]]])
+                                                     val indices: C => Seq[MongoIndex] = (c: C) => Seq.empty[MongoIndex])
   extends MutableFrontletCollection[C] with MongoFrontletConverter[C] {
 
   import MongoFrontletConverter._
@@ -118,9 +146,7 @@ class MongoFrontletCollection[C <: AbstractFrontlet](val coll: DBCollection,
     val c = constructor()
     val indices = this.indices(c)
     for (index <- indices) {
-      val dbo = new BasicDBObject()
-      for (key <- index) dbo.put(key.name, 1)
-      coll.ensureIndex(dbo)
+      index.ensureIndex(coll)
     }
   }
 
@@ -371,6 +397,8 @@ object MongoFrontletConverter {
   }
 
 
+
+
   def toMongo(any: Any): Any = {
     any match {
       case smap: scala.collection.Map[_, _] =>
@@ -565,7 +593,7 @@ class BSONMap(val bson: BSONObject) extends collection.mutable.Map[String, Any] 
 /**
  * Implicits to import when you want to create frontlet mongo queries.
  */
-object MongoFrontletImplicits {
+object MongoFrontletImplicits extends FrontletImplicits {
 
   implicit def toMongoSlot[C <: AbstractFrontlet, V](slot: C#BasicSlot[V]) = new MongoSlot(slot)
 

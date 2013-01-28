@@ -2,3 +2,6 @@ Changes:
 
 * More README documentation
 * More Spec coverage
+* Slot.apply method now supports options
+* can define more complex indices (index on subfields, 2D)
+* TODO: Case class support

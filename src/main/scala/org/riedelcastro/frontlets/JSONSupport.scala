@@ -13,6 +13,9 @@ import scala.Some
 import collection.JavaConversions.JConcurrentMapWrapper
 import com.fasterxml.jackson.core.{JsonParser, Version}
 
+case class A(i:Int)
+case class B(a:A)
+
 /**
  * @author riedelcastro
  */
@@ -25,6 +28,20 @@ object JSONSupport {
 //    val parsed = parse[collection.mutable.Map[String, Any]](json) //=> Map("one"->1,"two"->2)
     println(parsedJacks)
     println(parsedFrontlet)
+
+
+    val b = B(A(3))
+    val bJSON = FrontletJacksonMapper.writeValueAsString(b)
+    println(bJSON)
+    println(FrontletJacksonMapper.readValue[B](bJSON))
+
+
+    import com.novus.salat._
+    import com.novus.salat.global._
+
+
+    println(grater[B].asDBObject(b))
+
 
   }
 

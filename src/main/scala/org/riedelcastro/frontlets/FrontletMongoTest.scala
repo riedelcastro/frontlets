@@ -64,7 +64,7 @@ object FrontletMongoTest {
     val mongoDB = mongoConn.getDB("mongofrontlet-test")
     val coll = mongoDB.getCollection("persons")
     coll.drop()
-    val persons = new MongoFrontletCollection(coll, () => new Person, (p: Person) => Seq(Seq(p.name))) with LazyFrontletConverter[Person]
+    val persons = new MongoFrontletCollection(coll, () => new Person, (p: Person) => Seq(MongoIndex(p.name))) with LazyFrontletConverter[Person]
 
     persons += james
     persons += laura

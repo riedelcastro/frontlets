@@ -135,10 +135,10 @@ immutable objects, see [zippers][zippers].
 
 Installation
 ------------
-You can use frontlets as a sbt dependency
+You can use frontlets as an sbt dependency
 
     resolvers ++= Seq("IESL snapshots" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/snapshots",
-                     "IESL releases" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/releases")
+                      "IESL releases" at "https://dev-iesl.cs.umass.edu/nexus/content/repositories/releases")
 
     libraryDependencies += "org.riedelcastro.frontlets" %% "frontlets" % "[VERSION]"
 

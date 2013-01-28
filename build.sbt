@@ -27,7 +27,8 @@ libraryDependencies ++= Seq(
      "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT",
      "org.scalatest" %% "scalatest" % "1.8" % "test",
      "org.mockito" % "mockito-all" % "1.9.0" % "test",
-     "org.apache.bcel" % "bcel" % "5.2"
+     "org.apache.bcel" % "bcel" % "5.2",
+     "com.novus" %% "salat" % "1.9.1"
 )
 
 publishTo <<= (version) { version: String =>

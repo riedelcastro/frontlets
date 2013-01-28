@@ -107,6 +107,13 @@ class FrontletSpec extends FunSpec with MustMatchers{
       c.list() must be (Seq(Seq(Seq(1.0,2.0))))
     }
 
+    it("should provide qualified paths to its slot") {
+      import FrontletImplicits._
+      val person = new Person()
+      val path = person.address / (_.street)
+      path.toPathString must be ("address.street")
+    }
+
   }
 
   describe("An immutable Frontlet") {

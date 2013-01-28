@@ -219,6 +219,7 @@ trait AbstractFrontlet {
      * @return the frontlet this slot belongs to.
      */
     def apply(value: T): FrontletType = this := value
+    def apply(value: Option[T]) : FrontletType = this := value
 
     def opt: Option[T]
 
@@ -272,6 +273,8 @@ trait AbstractFrontlet {
 
   abstract class Slot[T](val name: String) extends BasicSlot[T]
 
+  //case class CaseClassSlot[C<:Product](name)
+
   case class TransientSlot[T](override val name:String) extends Slot[T](name) {
 
     def :=(value: T) = assignTransient(name,value)
@@ -312,6 +315,10 @@ trait AbstractFrontlet {
 
   case class DateSlot(override val name: String) extends PrimitiveSlot[java.util.Date](name) {
     def default = new java.util.Date
+  }
+
+  case class CaseClassSlot[C<:Product](override val name:String) extends PrimitiveSlot[C](name) {
+    def default = sys.error("Not supported")
   }
 
 
@@ -522,11 +529,27 @@ trait AbstractFrontlet {
       this := f(opt.getOrElse(constructor()))
     }
 
+    /**
+     * Appends the result slot path to this slot
+     * @param f takes a (constructed) value of A and gets a path
+     * @return this slot prepended to the path returned by f.
+     */
+    def /(f:A=>SlotPath) = SlotPath(this +: f(constructor()).steps)
+
     def default = constructor()
 
   }
 
 }
+
+/**
+ * A path of slots, can be used for defining mongo indices and other things that support qualified attribute names.
+ * @param steps the slots in this path.
+ */
+case class SlotPath(steps:Seq[AbstractFrontlet#AbstractSlot[Any]]) {
+  def toPathString = steps.map(_.name).mkString(".")
+}
+
 
 /**
  * An immutable frontlet, backed by an immutable map. Any assignment of values creates a new
