@@ -522,8 +522,14 @@ class MongoSlot[C <: AbstractFrontlet, V](val slot: C#BasicSlot[V]) {
 
 class MongoRefSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](val slot: C#AbstractRefSlot[A]) {
   def in2(coll: MongoFrontletCollection[A]): GraphLoader.SlotInCollection[A] = GraphLoader.SlotInCollection(slot, coll)
-
 }
+
+class MongoDoubleListSlot[C <: AbstractFrontlet](val slot: C#DoubleListSlot) {
+  def $near(x:Double,y:Double) = {
+    slot.frontlet.assign(slot.name, Map("$near" -> Seq(x,y)))
+  }
+}
+
 
 /**
  * Support for mongo queries specific to list attributes
@@ -606,6 +612,8 @@ object MongoFrontletImplicits extends FrontletImplicits {
   implicit def toMongoPrimitiveListSlot[C <: AbstractFrontlet, A](slot: C#PrimitiveListSlot[A]) = new MongoPrimitiveListSlot(slot)
 
   implicit def toMongoFrontlet[C <: AbstractFrontlet](frontlet: C) = new MongoFrontlet(frontlet)
+
+  implicit def toMongoDoubleListFrontlet[C <: AbstractFrontlet, A](slot: C#DoubleListSlot) = new MongoDoubleListSlot(slot)
 
 }
 
