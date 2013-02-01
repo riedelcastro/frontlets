@@ -7,7 +7,7 @@ organization := "org.riedelcastro.frontlets"
 // All other initialization methods are implemented in terms of these.
 //version := "0.1-SNAPSHOT"
 
-crossScalaVersions := Seq("2.9.1", "2.9.2")
+crossScalaVersions := Seq("2.9.1", "2.9.2","2.10.0")
 
 scalaVersion := "2.9.2"
 
@@ -25,10 +25,10 @@ libraryDependencies ++= Seq(
      "com.lambdaworks" % "jacks" % "2.0.4",
      "org.mongodb" % "mongo-java-driver" % "2.10.1",
      "org.riedelcastro.nurupo" %% "nurupo" % "0.1-SNAPSHOT",
-     "org.scalatest" %% "scalatest" % "1.8" % "test",
+     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
      "org.mockito" % "mockito-all" % "1.9.0" % "test",
-     "org.apache.bcel" % "bcel" % "5.2",
-     "com.novus" %% "salat" % "1.9.1"
+     "org.apache.bcel" % "bcel" % "5.2"
+//     "com.novus" %% "salat" % "1.9.1"
 )
 
 publishTo <<= (version) { version: String =>

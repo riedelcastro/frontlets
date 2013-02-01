@@ -36,13 +36,6 @@ object JSONSupport {
     println(FrontletJacksonMapper.readValue[B](bJSON))
 
 
-    import com.novus.salat._
-    import com.novus.salat.global._
-
-
-    println(grater[B].asDBObject(b))
-
-
   }
 
 }

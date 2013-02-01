@@ -375,7 +375,7 @@ trait AbstractFrontlet {
         val frontlets = for (i <- s.indices; m = s(i)) yield
           construct(i).addMap(m.asInstanceOf[collection.Map[String, Any]])
         Some(frontlets.asInstanceOf[Seq[A]])
-      case None => None
+      case _ => None
     }
 
     def :=(value: Seq[A]) = {
@@ -407,7 +407,7 @@ trait AbstractFrontlet {
       case Some(s: Seq[_]) =>
         val frontlets = s.view.map(m => constructor().addMap(m.asInstanceOf[collection.Map[String, Any]]))
         Some(frontlets.asInstanceOf[Seq[A]])
-      case None => None
+      case _ => None
     }
 
     /**

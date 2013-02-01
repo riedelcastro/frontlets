@@ -4,4 +4,5 @@ Changes:
 * More Spec coverage
 * Slot.apply method now supports options
 * can define more complex indices (index on subfields, 2D)
+* Upgrade to Scala 2.10.0
 * TODO: Case class support

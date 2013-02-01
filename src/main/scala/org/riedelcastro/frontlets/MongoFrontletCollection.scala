@@ -526,7 +526,14 @@ class MongoRefSlot[C <: AbstractFrontlet, A <: AbstractFrontlet](val slot: C#Abs
 
 class MongoDoubleListSlot[C <: AbstractFrontlet](val slot: C#DoubleListSlot) {
   def $near(x:Double,y:Double) = {
-    slot.frontlet.assign(slot.name, Map("$near" -> Seq(x,y)))
+    slot.frontlet.assign(slot.name, mapForSlot + ("$near" -> Seq(x,y)))
+  }
+  def $maxDistance(distance:Double) = {
+    slot.frontlet.assign(slot.name, mapForSlot + ("$maxDistance" -> distance))
+  }
+
+  private def mapForSlot: Map[String, Any] = {
+    slot.frontlet.get(slot.name).getOrElse(Map.empty).asInstanceOf[Map[String, Any]]
   }
 }
 
