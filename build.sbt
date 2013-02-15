@@ -32,13 +32,13 @@ libraryDependencies ++= Seq(
 )
 
 publishTo <<= (version) { version: String =>
-  val iesl = "https://dev-iesl.cs.umass.edu/nexus/content/repositories/"
-  if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at iesl + "snapshots/")
-  else                                   Some("releases"  at iesl + "releases/")
+  val homeniscient = "http://homeniscient.cs.ucl.ac.uk:8081/nexus/content/repositories/"
+  if (version.trim.endsWith("SNAPSHOT")) Some("snapshots" at homeniscient + "snapshots/")
+  else                                   Some("releases"  at homeniscient + "releases/")
 }
 
 
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+credentials += Credentials(Path.userHome / ".ivy2" / ".credentials-homeniscient")
 
 releaseSettings
 
