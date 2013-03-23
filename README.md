@@ -46,7 +46,7 @@ A simple querying example:
 val coll = mongoDB.getCollection("persons")
 val persons = new MongoFrontletCollection(coll, () => new Person)
 val old = persons.query(_.age.$gt(36),_.name.select)
-val age = old.next().name()
+val name = old.next().name()
 ```
 
 The last query here returns all persons (frontlets) over 36, but only retrieves their name field.
