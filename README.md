@@ -137,8 +137,8 @@ Installation
 ------------
 You can use frontlets as an sbt dependency
 
-    resolvers ++= Seq("IESL snapshots" at "http://homeniscient.cs.ucl.ac.uk:8081/nexus/content/repositories/snapshots",
-                      "IESL releases" at "http://homeniscient.cs.ucl.ac.uk:8081/nexus/content/repositories/releases")
+    resolvers ++= Seq("UCLCL snapshots" at "http://homeniscient.cs.ucl.ac.uk:8081/nexus/content/repositories/snapshots",
+                      "UCLCL releases" at "http://homeniscient.cs.ucl.ac.uk:8081/nexus/content/repositories/releases")
 
     libraryDependencies += "org.riedelcastro.frontlets" %% "frontlets" % "[VERSION]"
 
