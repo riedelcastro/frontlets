@@ -99,7 +99,7 @@ val Seq(first,second) = data.take(2).toSeq
 //find all nodes starting from the two given example nodes, and using the given neighborhood function
 //this graph will be implicitly used in all ref slots and inverse slots when calling "*" methods
 implicit val graph = GraphLoader.loadGraph(Seq(first,second), {
-  case N: Node => Seq(p.children in data, p.parent in data)})
+  case p: Node => Seq(p.children in data, p.parent in data)})
 
 //the following calls actually use the above cache objects, and return the neighbor of the given object
 //as stored in the graph.
