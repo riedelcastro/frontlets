@@ -26,6 +26,13 @@ println(person.name())
 println(person.age())
 ```
 
+The `:=` operator is also aliased with the `apply(value)` method that can be chained:
+
+```scala
+val person = new Person().name("Riedel Castro").age(36)
+```
+
+
 All slot values are stored in, and retrieved from, an underlying mutable (or immutable, see below) scala map, in this case `person._map`.
 This map can come from anywhere: json results of a web-service, bson query results of a mongo database etc. In these
 cases frontlets give clients typed and concise access to the underlying raw map.
