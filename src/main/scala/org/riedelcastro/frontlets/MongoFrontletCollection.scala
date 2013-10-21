@@ -3,7 +3,7 @@ package org.riedelcastro.frontlets
 import org.bson.BSONObject
 import scala.collection.JavaConversions._
 import com.mongodb.{BasicDBList, BasicDBObject, DBCursor, DBObject, DBCollection, Mongo}
-import org.bson.types.BasicBSONList
+import org.bson.types.{ObjectId, BasicBSONList}
 import scala.annotation.tailrec
 import collection.{Map => GenericMap, mutable, MapProxy, JavaConversions}
 import scala.collection.mutable.{HashSet, ArrayBuffer, HashMap, Map => MutableMap}
@@ -418,6 +418,7 @@ object MongoFrontletConverter {
 
   def toFrontlet(any: Any): Any = {
     any match {
+      //case objectId:ObjectId => objectId
       case dbList: BasicBSONList =>
         val list = new ArrayBuffer[Any]
         for (element <- dbList) list += toFrontlet(element)

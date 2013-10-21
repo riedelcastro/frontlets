@@ -405,7 +405,9 @@ trait AbstractFrontlet {
      */
     def opt = get(name) match {
       case Some(s: Seq[_]) =>
-        val frontlets = s.view.map(m => constructor().addMap(m.asInstanceOf[collection.Map[String, Any]]))
+        //todo: this used to be a view of the map, but that would cause
+        //todo: map calls to not be executed even if side effects were required.
+        val frontlets = s.map(m => constructor().setMap(m.asInstanceOf[collection.Map[String, Any]]))
         Some(frontlets.asInstanceOf[Seq[A]])
       case _ => None
     }

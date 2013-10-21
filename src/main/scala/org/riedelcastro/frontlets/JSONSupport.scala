@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.Some
 import collection.JavaConversions.JConcurrentMapWrapper
 import com.fasterxml.jackson.core.{JsonParser, Version}
+import org.bson.types.ObjectId
 
 case class A(i:Int)
 case class B(a:A)
@@ -34,6 +35,10 @@ object JSONSupport {
     val bJSON = FrontletJacksonMapper.writeValueAsString(b)
     println(bJSON)
     println(FrontletJacksonMapper.readValue[B](bJSON))
+
+    val t = new Frontlet
+    t.Id := new ObjectId()
+    println(t.toJSON)
 
 
   }

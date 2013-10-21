@@ -134,3 +134,19 @@ class FrontletSpec extends FunSpec with MustMatchers{
 
 
 }
+
+class CLIFrontletSpec extends FunSpec with MustMatchers {
+
+  import FrontletSpec._
+
+  describe("A CLIFrontlet") {
+    ignore("should work :)"){
+      class Params extends CLIFrontlet[Params] {
+        val file = StringSlot("file") cli("f",true)
+      }
+      val parsed = CLIParser.parse(Array("-f","test.csv"),new Params)
+      val file = parsed.file()
+      println(file)
+    }
+  }
+}
