@@ -26,6 +26,16 @@ class FrontletListSpec extends FunSpec with MustMatchers{
       composite.basics().head.number() must be(5)
       composite.basics().map(basic => basic.number := basic.number() + 1)
       composite.basics().head.number() must be(6)
+      composite.basics().tail.head.number() must be(4)
+    }
+    it ("should be able to change values of its FrontListSlot using foreach") {
+      val basic1 = new BasicFrontlet().number(5)
+      val basic2 = new BasicFrontlet().number(3)
+      val composite = new CompositeFrontlet().basics(List(basic1, basic2))
+      composite.basics().head.number() must be(5)
+      composite.basics().foreach(basic => basic.number := basic.number() + 1)
+      composite.basics().head.number() must be(6)
+      composite.basics().tail.head.number() must be(4)
     }
   }
 }
