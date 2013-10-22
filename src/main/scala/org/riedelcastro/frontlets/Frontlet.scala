@@ -373,6 +373,7 @@ trait AbstractFrontlet {
     def opt = get(name) match {
       case Some(s: Seq[_]) =>
         val frontlets = for (i <- s.indices; m = s(i)) yield
+          //todo: this should reuse mutable maps in the list, but it's currently not.
           construct(i).addMap(m.asInstanceOf[collection.Map[String, Any]])
         Some(frontlets.asInstanceOf[Seq[A]])
       case _ => None
@@ -405,9 +406,7 @@ trait AbstractFrontlet {
      */
     def opt = get(name) match {
       case Some(s: Seq[_]) =>
-        //todo: this used to be a view of the map, but that would cause
-        //todo: map calls to not be executed even if side effects were required.
-        val frontlets = s.map(m => constructor().setMap(m.asInstanceOf[collection.Map[String, Any]]))
+        val frontlets = s.view.map(m => constructor().setMap(m.asInstanceOf[collection.Map[String, Any]]))
         Some(frontlets.asInstanceOf[Seq[A]])
       case _ => None
     }
