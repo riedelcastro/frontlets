@@ -26,6 +26,9 @@ println(person.name())
 println(person.age())
 ```
 
+Note that you *must* use the parentheses after the slot name, otherwise the result is the slot object itself, not its
+value. So `person.name()` returns "Riedel ..." but `person.name` the name slot of the `person` frontlet.
+
 The `:=` operator is also aliased with the `apply(value)` method that can be chained:
 
 ```scala
